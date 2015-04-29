@@ -47,7 +47,7 @@ public class HeightIndicator extends Entity {
         //INTERFACE
         try {
             textureHeightIndicator = new AssetBitmapTexture(ResourcesController.getInstance().gameControl.getTextureManager(),
-                    ResourcesController.getInstance().gameControl.getAssets(), "Levels/indicator.png");
+                    ResourcesController.getInstance().gameControl.getAssets(), "Interface/indicator.png");
             regionHeightIndicator = TextureRegionFactory.extractFromTexture(textureHeightIndicator);
             textureHeightIndicator.load();
 

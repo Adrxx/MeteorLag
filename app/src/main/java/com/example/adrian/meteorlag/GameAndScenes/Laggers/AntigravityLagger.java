@@ -33,7 +33,7 @@ public class AntigravityLagger extends Lagger{
     public void actUponScene() {
         super.actUponScene();
         this.savedEnergy = this.actingScene.lagBar.getFill();
-        this.actingScene.meteorAcceleration =this.actingScene.currentLevel.requestInitialAcceleration()/20;
+        this.actingScene.meteorAcceleration =this.actingScene.currentLevel.propierties.getAcceleration()/20;
         this.actingScene.meteorVelocity = 1.0f;
         this.actingScene.lagBar.reduceFillBy( Math.max(40.0f,this.actingScene.lagBar.getFill()/2) );
 
@@ -58,7 +58,7 @@ public class AntigravityLagger extends Lagger{
         try {
             // Carga la imagen de fondo de la pantalla Splash
             buttonTexture = new AssetBitmapTexture(ResourcesController.getInstance().gameControl.getTextureManager(),
-                    ResourcesController.getInstance().gameControl.getAssets(), "Levels/laggers/weapon_lagger_1.png");
+                    ResourcesController.getInstance().gameControl.getAssets(), INTERFACE_FOLDER+ "weapon_lagger_1.png");
             buttonTextureRegion = TextureRegionFactory.extractFromTexture(buttonTexture);
             buttonTexture.load();
         } catch (IOException e) {
@@ -76,7 +76,7 @@ public class AntigravityLagger extends Lagger{
     public void wearOff()
     {
         super.wearOff();
-        this.actingScene.meteorAcceleration = this.actingScene.currentLevel.requestInitialAcceleration();
+        this.actingScene.meteorAcceleration = this.actingScene.currentLevel.propierties.getAcceleration();
         this.actingScene.meteorVelocity *= 1.2f;
         this.overlay.clearEntityModifiers();
         this.overlay.detachSelf();

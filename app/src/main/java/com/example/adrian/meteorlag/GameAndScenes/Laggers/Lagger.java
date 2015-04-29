@@ -41,6 +41,8 @@ public abstract class Lagger
 
     }
 
+    final static public String INTERFACE_FOLDER = "Interface/";
+
     public ITexture buttonTexture;
     public ITextureRegion buttonTextureRegion;
 

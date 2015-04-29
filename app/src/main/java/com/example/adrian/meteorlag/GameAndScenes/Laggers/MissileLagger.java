@@ -32,7 +32,7 @@ public class MissileLagger extends Lagger{
         try {
             // Carga la imagen de fondo de la pantalla Splash
             buttonTexture = new AssetBitmapTexture(ResourcesController.getInstance().gameControl.getTextureManager(),
-                    ResourcesController.getInstance().gameControl.getAssets(), "Levels/laggers/weapon_lagger_2.png");
+                    ResourcesController.getInstance().gameControl.getAssets(), INTERFACE_FOLDER+"weapon_lagger_2.png");
             buttonTextureRegion = TextureRegionFactory.extractFromTexture(buttonTexture);
             buttonTexture.load();
         } catch (IOException e) {

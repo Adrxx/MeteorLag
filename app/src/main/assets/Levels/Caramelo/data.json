@@ -1,0 +1,19 @@
+{
+  "title":"Tierra",
+  "subtitle":"2015",
+  "acceleration":20,
+  "velocity":80,
+  "height":60000,
+  "resistance":10,
+  "time":70,
+  "laggerRate":3,
+  "speederRate":1,
+  "stops":[
+    {"at":1000,"text":"this is kind of a try test... 0"},
+    {"at":5123,"text":"this is kind of a try test... 1"},
+    {"at":12393,"text":"this is kind of a try test...2"},
+    {"at":35530,"text":"this is kind of a try test...3"},
+    {"at":55900,"text":"this is kind of a try test...4"},
+    {"at":60000,"text":"this is kind of a try test...5"}
+  ]
+}

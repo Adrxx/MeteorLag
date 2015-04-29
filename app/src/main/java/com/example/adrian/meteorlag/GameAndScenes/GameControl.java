@@ -27,8 +27,11 @@ public class GameControl extends SimpleBaseGameActivity
     @Override
     public EngineOptions onCreateEngineOptions() {
         camera = new Camera(0,0, CAMERA_WIDTH, CAMERA_HEIGHT);
+        /*return new EngineOptions(true, ScreenOrientation.PORTRAIT_FIXED,
+                new RatioResolutionPolicy(CAMERA_WIDTH,CAMERA_HEIGHT), camera);*/
+
         return new EngineOptions(true, ScreenOrientation.PORTRAIT_FIXED,
-                new RatioResolutionPolicy(CAMERA_WIDTH,CAMERA_HEIGHT), camera);
+                new FillResolutionPolicy(), camera);
     }
 
     @Override
