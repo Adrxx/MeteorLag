@@ -1,0 +1,42 @@
+package com.example.adrian.meteorlag;
+
+import org.andengine.entity.scene.background.AutoParallaxBackground;
+import org.andengine.entity.scene.background.ParallaxBackground;
+import org.andengine.entity.sprite.Sprite;
+
+/**
+ * Created by Adrian on 3/10/15.
+ */
+public class Level1Earth extends Level
+{
+
+    public Level1Earth(AdministradorRecursos adm) {
+        super(adm);
+    }
+
+    @Override
+    protected String requestLevelID() {
+        return "1";
+    }
+
+    @Override
+    protected float requestInitialAcceleration() {
+        return 170.0f;
+    }
+
+    @Override
+    protected float requestInitialVelocity() {
+        return 400.0f;
+    }
+
+    @Override
+    protected float requestInitialHeight() {
+        return 30000.0f;
+    }
+
+    @Override
+    protected float requestMeteorMoveResistance() {
+        return 6.0f;
+    }
+
+}

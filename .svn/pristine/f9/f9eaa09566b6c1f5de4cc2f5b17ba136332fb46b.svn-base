@@ -1,0 +1,15 @@
+package com.example.adrian.meteorlag;
+
+import org.andengine.entity.sprite.Sprite;
+import org.andengine.opengl.texture.region.ITextureRegion;
+import org.andengine.opengl.vbo.VertexBufferObjectManager;
+
+/**
+ * Created by Adrian on 3/11/15.
+ */
+public class Meteor extends Sprite
+{
+    public Meteor(float pX, float pY, ITextureRegion pTextureRegion, VertexBufferObjectManager pVertexBufferObjectManager) {
+        super(pX, pY, pTextureRegion, pVertexBufferObjectManager);
+    }
+}

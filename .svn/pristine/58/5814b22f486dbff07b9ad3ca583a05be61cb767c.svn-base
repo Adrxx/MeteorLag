@@ -1,0 +1,223 @@
+package com.example.adrian.meteorlag.GameAndScenes;
+
+import android.util.Log;
+
+import com.example.adrian.meteorlag.Interface.VerticalGameBackground;
+
+import org.andengine.engine.Engine;
+import org.andengine.engine.camera.Camera;
+import org.andengine.entity.scene.background.ParallaxBackground;
+import org.andengine.entity.sprite.Sprite;
+import org.andengine.entity.text.Text;
+import org.andengine.opengl.font.Font;
+import org.andengine.opengl.font.FontFactory;
+import org.andengine.opengl.texture.ITexture;
+import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
+import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
+import org.andengine.opengl.texture.atlas.bitmap.BuildableBitmapTextureAtlas;
+import org.andengine.opengl.texture.atlas.bitmap.source.IBitmapTextureAtlasSource;
+import org.andengine.opengl.texture.atlas.buildable.builder.BlackPawnTextureAtlasBuilder;
+import org.andengine.opengl.texture.atlas.buildable.builder.ITextureAtlasBuilder;
+import org.andengine.opengl.texture.bitmap.AssetBitmapTexture;
+import org.andengine.opengl.texture.region.ITextureRegion;
+import org.andengine.opengl.texture.region.ITiledTextureRegion;
+import org.andengine.opengl.texture.region.TextureRegionFactory;
+import org.andengine.opengl.util.GLState;
+import org.andengine.opengl.vbo.VertexBufferObjectManager;
+
+import java.io.IOException;
+
+/**
+ * Created by Adrian on 2/5/15.
+ */
+
+public class ResourcesController
+{
+    // Instancia única de la clase
+    private static final ResourcesController INSTANCE =
+            new ResourcesController();
+
+    public Engine engine;
+    public GameControl gameControl;
+    public Camera camara;
+    public VertexBufferObjectManager vbom;
+
+    public final VerticalGameBackground GAME_MENUS_BACKGROUND = new VerticalGameBackground(100.0f);
+    public Text loadingText;
+    // ** TEXTURAS **
+
+    // Escena Splash (imagen estática)
+    private ITexture texturaSplash;
+    public ITextureRegion regionSplash;
+
+    // Escena Menú
+    private ITexture textureUniversalBG;
+    public ITextureRegion regionUniversalBG;
+    private ITexture textureStars;
+    public ITextureRegion regionStars;
+
+    // Botón jugar del menú
+    public ITiledTextureRegion regionBtnJugar;
+    private BuildableBitmapTextureAtlas btaBtnJugar;
+    // BOTON ACERCA DE
+    public ITiledTextureRegion regionBtnAcercaDe;
+    private BuildableBitmapTextureAtlas btaBtnAcercaDe;
+
+    // Escena Acerca de
+    private ITexture texturaFondoAcercaDe;
+    public ITextureRegion regionFondoAcercaDe;
+
+
+    public Font getMainFont(float size, int color)
+    {
+
+        final ITexture texture = new BitmapTextureAtlas(this.engine.getTextureManager(),1024,1024);
+
+        Font f = FontFactory.createFromAsset(this.engine.getFontManager(),
+                texture, this.gameControl.getAssets(), "bebas.ttf", size, true, color);
+        f.load();
+
+        return f;
+    }
+
+    public Text generateText(String text,float x,float y,float size, int color)
+    {
+        return new Text(x,y,getMainFont(size,color),text, this.vbom);
+    }
+
+    public static ResourcesController getInstance() {
+        return INSTANCE;
+    }
+
+    public static void inicializarAdministrador(Engine engine,
+                                                GameControl control, Camera camara, VertexBufferObjectManager vbom) {
+
+        getInstance().engine = engine;
+        getInstance().gameControl =control;
+        getInstance().camara = camara;
+        getInstance().vbom = vbom;
+    }
+
+    public void loadUniversalResources()
+    {
+       this.loadingText = generateText("Cargando...",GameControl.CAMERA_WIDTH/2,GameControl.CAMERA_HEIGHT/2,90,0xFFFFFFFF);
+        try {
+            // Carga la imagen de fondo de la pantalla del Menú
+            textureUniversalBG = new AssetBitmapTexture(gameControl.getTextureManager(),
+                    gameControl.getAssets(), "universal_bg.png");
+            regionUniversalBG = TextureRegionFactory.extractFromTexture(textureUniversalBG);
+            textureUniversalBG.load();
+
+            // Carga la imagen de fondo de la pantalla del Menú
+            textureStars = new AssetBitmapTexture(gameControl.getTextureManager(),
+                    gameControl.getAssets(), "stars.png");
+            regionStars = TextureRegionFactory.extractFromTexture(textureStars);
+            textureStars.load();
+
+        } catch (IOException e) {
+            Log.d("cargarRecursosMenu","No se puede cargar los fondos universales");
+        }
+
+        final float x = GameControl.CAMERA_WIDTH/2;
+
+        Sprite rS= new Sprite(x,0, regionUniversalBG,this.vbom){
+            @Override
+            protected void preDraw(GLState pGLState, Camera pCamera) {
+                super.preDraw(pGLState, pCamera);
+                pGLState.enableDither();
+            }
+        };
+        Sprite eS = new Sprite(x,0, regionStars,this.vbom){
+            @Override
+            protected void preDraw(GLState pGLState, Camera pCamera) {
+                super.preDraw(pGLState, pCamera);
+                pGLState.enableDither();
+            }
+        };
+
+        ParallaxBackground.ParallaxEntity bg = new ParallaxBackground.ParallaxEntity(0.5f,rS);
+        ParallaxBackground.ParallaxEntity stars = new ParallaxBackground.ParallaxEntity(1.0f,eS);
+
+        this.GAME_MENUS_BACKGROUND.attachParallaxEntity(bg);
+        this.GAME_MENUS_BACKGROUND.attachParallaxEntity(stars);
+
+    }
+
+    //*** Recursos de la pantalla de Splash
+    public void cargarRecursosSplash() {
+        try {
+            // Carga la imagen de fondo de la pantalla Splash
+            texturaSplash = new AssetBitmapTexture(gameControl.getTextureManager(),
+                    gameControl.getAssets(), "LogoTec.png");
+            regionSplash = TextureRegionFactory.extractFromTexture(texturaSplash);
+            texturaSplash.load();
+        } catch (IOException e) {
+            Log.d("cargarRecursosSplash","No se puede cargar el fondo");
+        }
+    }
+
+    public void liberarRecursosSplash() {
+        texturaSplash.unload();
+        regionSplash = null;
+    }
+
+    //*** Recursos de la pantalla de Menú
+    public void cargarRecursosMenu() {
+
+            // Carga la imagen para el botón jugar
+            btaBtnJugar = new BuildableBitmapTextureAtlas(gameControl.getTextureManager(),
+                    256,128);
+            regionBtnJugar = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(btaBtnJugar, gameControl.getAssets(),
+                    "btnJugar.png", 1, 2);
+            try {
+                btaBtnJugar.build(new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>(0,0,0));
+
+            } catch(ITextureAtlasBuilder.TextureAtlasBuilderException e) {
+                Log.d("cargarRecursosMenu","No se puede cargar la imagen del botón jugar");
+            }
+            btaBtnJugar.load();
+
+            // ACERCA DE
+
+            // Carga la imagen para el botón jugar
+            btaBtnAcercaDe = new BuildableBitmapTextureAtlas(gameControl.getTextureManager(),
+                    256,128);
+            regionBtnAcercaDe = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(btaBtnAcercaDe, gameControl.getAssets(),
+                    "btnAcercaDe.png", 1, 2);
+            try {
+                btaBtnAcercaDe.build(new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>(0,0,0));
+
+            } catch(ITextureAtlasBuilder.TextureAtlasBuilderException e) {
+                Log.d("cargarRecursosMenu","No se puede cargar la imagen del botón acerca de");
+            }
+            btaBtnAcercaDe.load();
+    }
+
+    public void liberarRecursosMenu() {
+        // botón jugar
+        btaBtnJugar.unload();
+        regionBtnJugar = null;
+        btaBtnAcercaDe.unload();
+        regionBtnAcercaDe = null;
+    }
+
+    //*** Recursos de la pantalla de Acerca De
+    public void cargarRecursosAcercaDe() {
+        try {
+            // Carga la imagen de fondo de la pantalla Splash
+            texturaFondoAcercaDe = new AssetBitmapTexture(gameControl.getTextureManager(),
+                    gameControl.getAssets(), "creditos.jpg");
+            regionFondoAcercaDe = TextureRegionFactory.extractFromTexture(texturaFondoAcercaDe);
+            texturaFondoAcercaDe.load();
+        } catch (IOException e) {
+            Log.d("cargarRecursosAcercaDe","No se puede cargar el fondo");
+        }
+    }
+
+    public void liberarRecursosAcercaDe() {
+        texturaFondoAcercaDe.unload();
+        regionFondoAcercaDe = null;
+    }
+
+}
+

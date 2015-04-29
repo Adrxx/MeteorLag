@@ -1,0 +1,106 @@
+package com.example.adrian.meteorlag;
+
+import org.andengine.engine.camera.Camera;
+import org.andengine.entity.scene.background.SpriteBackground;
+import org.andengine.entity.sprite.ButtonSprite;
+import org.andengine.entity.sprite.Sprite;
+import org.andengine.input.touch.TouchEvent;
+import org.andengine.opengl.util.GLState;
+
+/**
+ * La escena que se muestra cuando corre la aplicación (Logo del TEC)
+ */
+
+public class EscenaMenu extends EscenaBase
+{
+    // *** Fondo
+    private Sprite spriteFondo; //(el fondo de la escena, estático)
+
+    // *** Botones del menú
+    private ButtonSprite btnJugar;
+    private ButtonSprite btnAcercaDe;
+
+    @Override
+    public void crearEscena() {
+        // Creamos el sprite de manera óptima
+        spriteFondo = new Sprite(0,0, admRecursos.regionFondoMenu,admRecursos.vbom) {
+            @Override
+            protected void preDraw(GLState pGLState, Camera pCamera) {
+                super.preDraw(pGLState, pCamera);
+                pGLState.enableDither();
+            }
+        };
+        // Configuración de la imagen
+        spriteFondo.setPosition(ControlJuego.ANCHO_CAMARA/2,ControlJuego.ALTO_CAMARA/2);
+
+        // Crea el fondo de la pantalla
+        SpriteBackground fondo = new SpriteBackground(0,0,0,spriteFondo);
+        setBackground(fondo);
+        setBackgroundEnabled(true);
+
+        // Habilita los eventos de touch en ciertas áreas
+        setTouchAreaBindingOnActionDownEnabled(true);
+
+
+        btnAcercaDe = new ButtonSprite(ControlJuego.ANCHO_CAMARA/2,ControlJuego.ALTO_CAMARA/2 - 120,
+                admRecursos.regionBtnAcercaDe,admRecursos.vbom) {
+            // Aquí el código que ejecuta el botón cuando es presionado
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if (pSceneTouchEvent.isActionUp()) {
+                    // Cambia a la escena de ACERCA DE
+                    admEscenas.crearEscenaAcercaDe();
+                    admEscenas.setEscena(TipoEscena.ESCENA_ACERCA_DE);
+                    admEscenas.liberarEscenaMenu();
+                }
+                return super.onAreaTouched(pSceneTouchEvent, pTouchAreaLocalX, pTouchAreaLocalY);
+            }
+        };
+
+        // *** Agrega los botones al Menú
+        btnJugar = new ButtonSprite(ControlJuego.ANCHO_CAMARA/2,ControlJuego.ALTO_CAMARA/2,
+                admRecursos.regionBtnJugar,admRecursos.vbom) {
+            // Aquí el código que ejecuta el botón cuando es presionado
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if (pSceneTouchEvent.isActionUp()) {
+                    // Cambia a la escena de ACERCA DE
+                    admEscenas.crearEscenaJuego();
+                    admEscenas.setEscena(TipoEscena.ESCENA_JUEGO);
+                    admEscenas.liberarEscenaMenu();
+                }
+                return super.onAreaTouched(pSceneTouchEvent, pTouchAreaLocalX, pTouchAreaLocalY);
+            }
+        };
+
+        registerTouchArea(btnAcercaDe);
+        attachChild(btnAcercaDe);
+
+        registerTouchArea(btnJugar);
+        attachChild(btnJugar);
+    }
+
+    @Override
+    public void onBackKeyPressed() {
+        // Salir del juego
+    }
+
+    @Override
+    public TipoEscena getTipoEscena() {
+        return TipoEscena.ESCENA_MENU;
+    }
+
+    @Override
+    public void liberarEscena() {
+        // Liberar cada recurso usado en esta escena
+        // FONDO
+        spriteFondo.detachSelf();   // Se desconecta de la escena
+        spriteFondo.dispose();      // Libera la memoria
+        // Btn Jugar
+        btnJugar.detachSelf();
+        btnJugar.dispose();
+
+        this.detachSelf();      // La escena se deconecta del engine
+        this.dispose();         // Libera la memoria
+    }
+}

@@ -1,0 +1,116 @@
+package com.example.adrian.meteorlag;
+
+import org.andengine.entity.primitive.Rectangle;
+import org.andengine.entity.sprite.ButtonSprite;
+import org.andengine.entity.sprite.Sprite;
+import org.andengine.input.touch.TouchEvent;
+import org.andengine.opengl.texture.region.ITextureRegion;
+import org.andengine.opengl.vbo.VertexBufferObjectManager;
+import org.andengine.util.adt.color.Color;
+
+import java.util.ArrayList;
+
+/**
+ * Created by Adrian on 3/10/15.
+ */
+public class LagBar extends Sprite {
+
+    private final float FILL_WIDTH = 15.0f;
+    private final float LAG_BAR_HEIGHT = 420.0f;
+
+
+    private float fill = 0;
+    private Rectangle bar;
+
+    private ArrayList<Sprite> laggers = new ArrayList<>();
+
+    public float getFill() {
+        return fill;
+    }
+
+    public void setFill(float fill) {
+        fill = Math.min(fill,LAG_BAR_HEIGHT);
+        this.fill = fill;
+        this.bar.setHeight(LAG_BAR_HEIGHT/100 * fill);
+        this.bar.setY(this.bar.getHeight()/2);
+
+        int affectedLaggers = Math.round(fill / (100/this.laggers.size()) );
+
+        for (int i = 0; i < this.laggers.size(); i++ )
+        {
+            Sprite sp = this.laggers.get(i);
+
+            if (i < affectedLaggers)
+            {
+                sp.setAlpha(1.0f);
+            }
+            else
+            {
+                sp.setAlpha(0.2f);
+            }
+
+        }
+
+
+    }
+
+    public LagBar(final float pX, final float pY, final AdministradorRecursos adm)
+    {
+
+        super(pX,pY,adm.regionLagBarBG,adm.vbom);
+        //System.out.println(adm);
+
+        Sprite lMissile = new Sprite(0,0,adm.regionWeaponLaggerMissile,adm.vbom);
+        Sprite lSuperMissile = new Sprite(0,0,adm.regionWeaponLaggerSuperMissile,adm.vbom);
+        Sprite lPortal = new Sprite(0,0,adm.regionWeaponLaggerPortal,adm.vbom);
+        Sprite lAntigravity = new Sprite(0,0,adm.regionWeaponLaggerAntigravity,adm.vbom);
+        Sprite lSpecial = new Sprite(0,0,adm.regionWeaponLaggerSpecial,adm.vbom);
+
+
+        this.laggers.add(lMissile);
+        this.laggers.add(lSuperMissile);
+        this.laggers.add(lPortal);
+        this.laggers.add(lAntigravity);
+        this.laggers.add(lSpecial);
+
+        this.setHeight(LAG_BAR_HEIGHT);
+        this.setWidth(FILL_WIDTH + LAG_BAR_HEIGHT / laggers.size() );
+
+        for (int i = 0; i < this.laggers.size(); i++ )
+        {
+            Sprite sp = this.laggers.get(i);
+
+            sp.setAlpha(0.2f);
+            //sp.setColor(Color.NO);
+
+            sp.setHeight( LAG_BAR_HEIGHT / (float) laggers.size() );
+            sp.setWidth( LAG_BAR_HEIGHT / (float) laggers.size() );
+
+            sp.setPosition(FILL_WIDTH + sp.getWidth()/2, sp.getHeight()/2 + sp.getHeight() * i);
+
+            attachChild(sp);
+        }
+
+        Rectangle bgFill = new Rectangle(0,0,0,1,adm.vbom);
+        bgFill.setColor(Color.BLACK);
+        bgFill.setHeight(LAG_BAR_HEIGHT);
+        bgFill.setWidth(FILL_WIDTH);
+        bgFill.setPosition(FILL_WIDTH/2.0f,this.getHeight()/2);
+
+
+        attachChild(bgFill);
+
+        this.bar = new Rectangle(0,0,0,1,adm.vbom);
+        bar.setColor(Color.GREEN);
+        bar.setHeight(0);
+        bar.setWidth(FILL_WIDTH);
+        bar.setPosition(FILL_WIDTH/2.0f,0);
+
+        attachChild(bar);
+
+
+
+    }
+
+
+}

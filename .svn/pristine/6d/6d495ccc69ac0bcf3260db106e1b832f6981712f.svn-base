@@ -1,0 +1,391 @@
+package com.example.adrian.meteorlag.GameAndScenes;
+
+import com.example.adrian.meteorlag.Interface.EntityLayer;
+import com.example.adrian.meteorlag.Interface.HeightIndicator;
+import com.example.adrian.meteorlag.Laggers.LagBar;
+import com.example.adrian.meteorlag.Meteor;
+import com.example.adrian.meteorlag.Interface.VerticalGameBackground;
+
+import org.andengine.entity.IEntity;
+import org.andengine.entity.modifier.AlphaModifier;
+import org.andengine.entity.modifier.LoopEntityModifier;
+import org.andengine.entity.modifier.SequenceEntityModifier;
+import org.andengine.entity.particle.ParticleSystem;
+import org.andengine.entity.particle.emitter.CircleParticleEmitter;
+import org.andengine.entity.particle.initializer.VelocityParticleInitializer;
+import org.andengine.entity.primitive.Rectangle;
+import org.andengine.entity.sprite.Sprite;
+import org.andengine.entity.text.Text;
+import org.andengine.input.sensor.acceleration.AccelerationData;
+import org.andengine.input.sensor.acceleration.IAccelerationListener;
+import org.andengine.input.touch.TouchEvent;
+import org.andengine.opengl.texture.region.ITextureRegion;
+import org.andengine.util.adt.color.Color;
+
+import java.util.ArrayList;
+
+/**
+ * Created by Adrian on 2/12/15.
+ */
+public class MainGameScene extends BaseScene implements GameMechanics, IAccelerationListener
+{
+    private GameStatus gameStatus;
+    private Level currentLevel;
+
+    //ALL METEOR PROPERTIES USED IN THE REAL-TIME SIMULATION
+    public float meteorVelocity;
+    public float meteorAcceleration;
+    public float meteorHeight;
+    public float meteorResistance;
+
+    //LEVEL LAYERS
+    private EntityLayer interfaceLayer;
+    private EntityLayer infoLayer;
+    private EntityLayer gameLayer;
+
+    // LEVEL RESOURCES
+    private Text levelTitle;
+    private Text levelSubtitle;
+    private Text tapToStartText;
+
+    // TODO: LEVEL MUST GIVE FULL SPRITES OR PARTICLE EMMITERS, NOT REGIONS. OR NOT?!?!?! DECIDE!
+    private ITextureRegion inGameLaggerRegion;
+    private ITextureRegion inGameSpeederRegion;
+
+    private Meteor meteor;
+    private HeightIndicator heightIndicator;
+
+    private ParticleSystem<Sprite> trailParticleSystem;
+    private CircleParticleEmitter trailEmmiter;
+    private VelocityParticleInitializer trailVelocityParticleInitializer;
+
+    public LagBar lagBar;
+    private VerticalGameBackground verticalGameBackground;
+
+    // GAME MECHANICS INTERNAL PROPERTIES
+    private float eleapsedTime;
+
+    private float inGameLaggerTimer = 0.0f;
+    private float inGameSpeederTimer = 0.0f;
+
+    private ArrayList<Sprite> inGameLaggers = new ArrayList<>();
+    private ArrayList<Sprite> inGameSpeeders = new ArrayList<>();
+
+
+    @Override
+    protected void onManagedUpdate(float pSecondsElapsed) {
+        super.onManagedUpdate(pSecondsElapsed);
+
+        switch (gameStatus)
+        {
+            case GAME_STARTING:
+                this.verticalGameBackground.setParallaxChangePerSecond(this.meteorVelocity);
+                break;
+            case GAME_PLAYING:
+                eleapsedTime += pSecondsElapsed;
+                this.meteorVelocity = Math.min(this.meteorVelocity + this.meteorAcceleration * pSecondsElapsed,2000.0f);
+                this.meteorHeight = this.meteorHeight - this.meteorVelocity * pSecondsElapsed;
+
+                this.verticalGameBackground.setParallaxChangePerSecond(this.meteorVelocity);
+                this.trailVelocityParticleInitializer.setVelocityY(this.meteorVelocity/3);
+                this.lagBar.incrementFillBy(0.03f);
+
+                if (!this.heightIndicator.hasReachedBottom)
+                {
+                    this.heightIndicator.updateHeightIndicator(this.meteorHeight/this.currentLevel.requestInitialHeight());
+                }
+                else
+                {
+                    gameOver();
+                }
+
+                //INGAME LAGGER
+                inGameLaggerTimer += pSecondsElapsed;
+                if ( inGameLaggerTimer > 0.4 +(10.0f * Math.random()) && this.meteorVelocity > this.currentLevel.requestInitialVelocity())
+                {
+                    spawnInGameLagger();
+                    inGameLaggerTimer = 0.0f;
+                }
+
+                for(int i=inGameLaggers.size()-1; i>=0; i--) {
+                    Sprite sp = inGameLaggers.get(i);
+
+                    sp.setY(sp.getY() + this.meteorVelocity *pSecondsElapsed);
+
+                    if (meteor.collidesWith(sp) ) {
+                        this.meteorVelocity *= 0.75f;
+                        this.lagBar.incrementFillBy(0.5f);
+
+                        sp.detachSelf();
+                        inGameLaggers.remove(sp);
+                    }
+                }
+
+                //INGAME SPEEDER
+                inGameSpeederTimer += pSecondsElapsed;
+                if ( inGameSpeederTimer > 0.1 +(7.0f * Math.random()) && this.meteorVelocity > this.currentLevel.requestInitialVelocity())
+                {
+                    spawnInGameSpeeder();
+                    inGameSpeederTimer = 0.0f;
+                }
+                for(int i=inGameSpeeders.size()-1; i>=0; i--)
+                {
+                    Sprite sp = inGameSpeeders.get(i);
+
+                    sp.setY(sp.getY() + this.meteorVelocity *pSecondsElapsed);
+
+                    if (meteor.collidesWith(sp) ) {   //
+                        this.meteorVelocity += 100.0f;
+                        this.lagBar.reduceFillBy(0.01f);
+
+                        sp.detachSelf();
+                        inGameSpeeders.remove(sp);
+                    }
+                }
+
+
+                break;
+            case GAME_PAUSED:
+                break;
+            case GAME_ENDING:
+                break;
+            case GAME_OVER:
+                break;
+            case GAME_WON:
+                break;
+            default:
+                break;
+        }
+
+
+    }
+
+    @Override
+    public void onAccelerationAccuracyChanged(AccelerationData pAccelerationData) {
+
+    }
+
+    @Override
+    public void onAccelerationChanged(AccelerationData pAccelerationData) {
+
+        float newX = meteor.getX() + ((pAccelerationData.getX()/10* GameControl.CAMERA_WIDTH /2)/this.meteorResistance);
+
+        if (newX < (meteor.getWidth()/2) ) { newX = (meteor.getWidth()/2); }
+        if (newX > GameControl.CAMERA_WIDTH - (meteor.getWidth()/2) ) { newX = GameControl.CAMERA_WIDTH - (meteor.getWidth()/2); }
+
+        this.trailEmmiter.setCenterX(newX);
+
+        this.meteor.setX(newX);
+    }
+
+
+    private void spawnInGameLagger()
+    {
+        Sprite l = new Sprite(GameControl.CAMERA_WIDTH * (float)Math.random() , 0 ,this.inGameLaggerRegion, resourcesController.vbom);
+        this.inGameLaggers.add(l);
+        this.gameLayer.attachChild(l);
+    }
+
+    private void spawnInGameSpeeder()
+    {
+        Sprite l = new Sprite(GameControl.CAMERA_WIDTH * (float)Math.random() , 0 ,this.inGameSpeederRegion, resourcesController.vbom);
+        this.inGameSpeeders.add(l);
+        this.gameLayer.attachChild(l);
+    }
+
+
+    //GAME MECHANICS INTERFACE
+    @Override
+    public void loadLevel(Level level) {
+        this.currentLevel = level;
+        //Carga las propiedades del nivel actual SOLO LAS CARGA NO DEBE PONERLAS EN ESCENA AÚN
+
+        this.meteorAcceleration = level.requestInitialAcceleration();
+        this.meteorVelocity = level.requestInitialVelocity();
+        this.meteorResistance = level.requestMeteorMoveResistance();
+        this.meteorHeight = level.requestInitialHeight();
+
+        this.levelTitle = resourcesController.generateText(level.requestLevelTitle(),GameControl.CAMERA_WIDTH/2,GameControl.CAMERA_HEIGHT/2 + 50,90,0xFFFFFFFF);
+        this.levelSubtitle = resourcesController.generateText(level.requestLevelYear(),GameControl.CAMERA_WIDTH/2,GameControl.CAMERA_HEIGHT/2 - 10,50,0xFFFFFFFF);
+        this.tapToStartText = resourcesController.generateText("Toque para iniciar",GameControl.CAMERA_WIDTH/2,GameControl.CAMERA_HEIGHT/2 - 60,32,0xFFFFFFFF);
+
+        this.verticalGameBackground = level.getBackground();
+        setBackground(this.verticalGameBackground);
+        setBackgroundEnabled(true);
+
+        this.meteor = level.requestMeteor();
+        this.lagBar = level.requestLagBar();
+
+        this.trailParticleSystem = level.requestTrailParticleSystem();
+        this.trailEmmiter = (CircleParticleEmitter) this.trailParticleSystem.getParticleEmitter();
+
+        this.inGameLaggerRegion = level.getInGameLaggerRegion();
+        this.inGameSpeederRegion = level.getInGameSpeederRegion();
+    }
+
+
+    @Override
+    public void startGameplay()
+    {
+        this.interfaceLayer = setupInterfaceLayer();
+        attachChild(this.interfaceLayer);
+
+        MainGameScene.this.resourcesController.engine.enableAccelerationSensor(MainGameScene.this.resourcesController.gameControl,MainGameScene.this); //HABILITA EL ACELEROMETRO
+        gameStatus = GameStatus.GAME_PLAYING;
+    }
+
+    @Override
+    public void pauseGameplay() {
+
+        resourcesController.engine.enableAccelerationSensor(resourcesController.gameControl,this); //HABILITA EL ACELEROMETRO
+
+
+    }
+
+    @Override
+    public void endGameplay()
+    {
+        this.gameStatus = GameStatus.GAME_ENDING;
+    }
+
+    @Override
+    public void winGame()
+    {
+        //onBackKeyPressed();
+    }
+
+    @Override
+    public void gameOver()
+    {
+        this.verticalGameBackground.startEndingSequence();
+        this.meteorVelocity = 0.0f;
+        this.meteorAcceleration = 0.0f;
+    }
+
+    //ESCENA BASE ABSTRACT METHODS _______
+    @Override
+    public void createScene()
+    {
+        Level1Earth level1 = new Level1Earth(this,this.resourcesController);
+        loadLevel(level1); //CARGA EL PRIMER NIVEL
+
+        //SETTING UP LAYERS
+        this.infoLayer = setupInfoLayer();
+        attachChild(this.infoLayer);
+
+        this.gameLayer = setupGameLayer();
+        attachChild(this.gameLayer);
+
+        this.gameStatus = GameStatus.GAME_STARTING;
+    }
+
+    private EntityLayer setupInterfaceLayer() {
+
+        EntityLayer layer = new EntityLayer(GameControl.CAMERA_WIDTH/2,GameControl.CAMERA_HEIGHT/2,GameControl.CAMERA_WIDTH,GameControl.CAMERA_HEIGHT);
+
+        this.lagBar.setPosition(GameControl.CAMERA_WIDTH/2, this.lagBar.getHeight()/2);
+
+        for (Sprite touchableButton : this.lagBar.touchableButtons) {
+            registerTouchArea(touchableButton);
+        }
+
+        layer.attachChild(this.lagBar);
+
+        this.heightIndicator =new HeightIndicator(0,0,this.meteor.getTextureRegion());
+        this.heightIndicator.setPosition(GameControl.CAMERA_WIDTH-this.heightIndicator.getWidth()/2 -10.0f,GameControl.CAMERA_HEIGHT/2);
+
+        layer.attachChild(this.heightIndicator);
+        return layer;
+    }
+
+    private EntityLayer setupGameLayer() {
+
+        EntityLayer layer = new EntityLayer(GameControl.CAMERA_WIDTH/2,GameControl.CAMERA_HEIGHT/2,GameControl.CAMERA_WIDTH,GameControl.CAMERA_HEIGHT);
+        //METEOR
+        this.meteor.setPosition(GameControl.CAMERA_WIDTH /2, GameControl.CAMERA_HEIGHT - this.meteor.getHeight() - 30);
+        layer.attachChild(this.meteor);
+
+        this.trailVelocityParticleInitializer = new VelocityParticleInitializer(-20,20, this.meteorVelocity, this.meteorVelocity);
+        this.trailParticleSystem.addParticleInitializer(this.trailVelocityParticleInitializer);
+
+        // Se agrega a la escena, como cualquier Sprite
+        layer.attachChild(trailParticleSystem);
+        this.trailEmmiter.setCenterY(this.meteor.getY());
+        this.trailEmmiter.setCenterX(meteor.getX()); //PARA QUE INICIE EN EL METEORO
+
+        return layer;
+
+    }
+
+    private EntityLayer setupInfoLayer() {
+
+        final EntityLayer layer = new EntityLayer(GameControl.CAMERA_WIDTH/2,GameControl.CAMERA_HEIGHT/2,GameControl.CAMERA_WIDTH,GameControl.CAMERA_HEIGHT);
+
+        AlphaModifier fadeIn = new AlphaModifier(0.4f,0.0f,1.0f);
+        AlphaModifier fadeOut = new AlphaModifier(0.4f,1.0f,0.0f);
+
+        SequenceEntityModifier seq = new SequenceEntityModifier(fadeIn,fadeOut);
+        LoopEntityModifier endless = new LoopEntityModifier(seq);
+
+        layer.attachChild(levelTitle);
+        layer.attachChild(levelSubtitle);
+        layer.attachChild(tapToStartText);
+
+        tapToStartText.registerEntityModifier(endless);
+
+        return layer;
+    }
+
+    @Override
+    public boolean onSceneTouchEvent(TouchEvent pSceneTouchEvent) {
+
+        if(pSceneTouchEvent.isActionDown()) {
+            switch (gameStatus) {
+                case GAME_STARTING:
+                    this.gameStatus = GameStatus.TRANSITION_STATUS;
+                    //Log.d("marti","FUCKAAA");
+                    AlphaModifier fadeOut = new AlphaModifier(0.5f, 1.0f, 0.0f) {
+                        @Override
+                        protected void onModifierFinished(IEntity pItem) {
+                            super.onModifierFinished(pItem);
+                            infoLayer.detachSelf();
+                            startGameplay();
+                        }
+                    };
+                    this.infoLayer.registerEntityModifier(fadeOut);
+                    break;
+                case GAME_ENDING:
+                    break;
+                default:
+
+                    break;
+            }
+        }
+
+        return super.onSceneTouchEvent(pSceneTouchEvent);
+    }
+
+    @Override
+    public void onBackKeyPressed() {
+        // Regresar al MENU principal
+        resourcesController.engine.disableAccelerationSensor(resourcesController.gameControl);
+        scenesController.crearEscenaMenu();
+        scenesController.setEscena(SceneType.MENU_SCENE);
+        scenesController.liberarEscenaJuego();
+    }
+
+    @Override
+    public SceneType getSceneType()
+    {
+        return SceneType.GAME_SCENE;
+    }
+
+    @Override
+    public void unloadScene() {
+        // Liberar cada recurso usado en esta escena
+        //this.currentLevel.unloadResources(); //TODO CHECA QUE TODO SE LIBERE!
+        this.detachSelf();     // La escena se deconecta del engine
+        this.dispose();         // Libera la memoria
+    }
+
+}

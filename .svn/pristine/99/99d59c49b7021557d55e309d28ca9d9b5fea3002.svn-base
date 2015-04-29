@@ -1,0 +1,185 @@
+package com.example.adrian.meteorlag;
+
+import android.opengl.GLES20;
+import android.util.Log;
+
+import org.andengine.entity.IEntityFactory;
+import org.andengine.entity.particle.ParticleSystem;
+import org.andengine.entity.particle.emitter.PointParticleEmitter;
+import org.andengine.entity.particle.initializer.AlphaParticleInitializer;
+import org.andengine.entity.particle.initializer.BlendFunctionParticleInitializer;
+import org.andengine.entity.particle.initializer.ColorParticleInitializer;
+import org.andengine.entity.particle.initializer.ExpireParticleInitializer;
+import org.andengine.entity.particle.initializer.RotationParticleInitializer;
+import org.andengine.entity.particle.initializer.ScaleParticleInitializer;
+import org.andengine.entity.particle.initializer.VelocityParticleInitializer;
+import org.andengine.entity.particle.modifier.AlphaParticleModifier;
+import org.andengine.entity.particle.modifier.RotationParticleModifier;
+import org.andengine.entity.particle.modifier.ScaleParticleModifier;
+import org.andengine.entity.scene.background.AutoParallaxBackground;
+import org.andengine.entity.scene.background.ParallaxBackground;
+import org.andengine.entity.sprite.Sprite;
+import org.andengine.input.sensor.acceleration.IAccelerationListener;
+import org.andengine.opengl.texture.ITexture;
+import org.andengine.opengl.texture.bitmap.AssetBitmapTexture;
+import org.andengine.opengl.texture.region.ITextureRegion;
+import org.andengine.opengl.texture.region.TextureRegionFactory;
+
+import java.io.IOException;
+
+/**
+ * Created by Adrian on 3/11/15.
+ */
+public abstract class Level
+{
+    final public String LEVEL_FOLDER = "Levels/Level";
+    final public String BACKGROUND_NAME = "/bg.png";
+    final public String METEOR_NAME = "/meteor.png";
+    final public String METEOR_TRAIL_NAME = "/trail.png";
+    final public String IN_LEVEL_LAGGER_NAME = "/lagger.png";
+    final public String IN_LEVEL_SPEEDER_NAME = "/speeder.png";
+
+    protected AdministradorRecursos admRecursos;
+
+    private ITexture textureBackground;
+    public ITextureRegion regionBackground;
+
+    private ITexture textureMeteor;
+    public ITextureRegion regionMeteor;
+
+    private ITexture textureMeteorTrail;
+    public ITextureRegion regionMeteorTrail;
+
+    private ITexture textureInGameLagger;
+    public ITextureRegion regionInGameLagger;
+
+    private ITexture textureInGameSpeeder;
+    public ITextureRegion regionInGameSpeeder;
+
+
+    protected abstract String requestLevelID();
+    protected abstract float requestInitialAcceleration();
+    protected abstract float requestInitialVelocity();
+    protected abstract float requestInitialHeight();
+    protected abstract float requestMeteorMoveResistance();
+    protected abstract float requestMinLevelTime();
+
+
+
+
+    public Level(AdministradorRecursos adm)
+    {
+        this.admRecursos = adm;
+        loadResources();
+    }
+
+    public void loadResources()
+    {
+
+        //BACKGROUND
+        try {
+            // *** Fondos para la animación en capas
+            textureBackground = new AssetBitmapTexture(this.admRecursos.actividadJuego.getTextureManager(),
+                    this.admRecursos.actividadJuego.getAssets(), LEVEL_FOLDER + requestLevelID() + BACKGROUND_NAME);
+            regionBackground = TextureRegionFactory.extractFromTexture(textureBackground);
+            textureBackground.load();
+        } catch (IOException e) {
+            Log.d("NIVEL ID: " + requestLevelID() , "No se pueden cargar la imagen" + BACKGROUND_NAME);
+        }
+
+        //METEOR
+        try {
+            // *** Fondos para la animación en capas
+            textureMeteor = new AssetBitmapTexture(this.admRecursos.actividadJuego.getTextureManager(),
+                    this.admRecursos.actividadJuego.getAssets(), LEVEL_FOLDER + requestLevelID() + METEOR_NAME);
+            regionMeteor = TextureRegionFactory.extractFromTexture(textureMeteor);
+            textureMeteor.load();
+        } catch (IOException e) {
+            Log.d("NIVEL ID: " + requestLevelID() , "No se pueden cargar la imagen" + METEOR_NAME);
+        }
+
+        //METEOR TRAIL
+        try {
+            // *** Fondos para la animación en capas
+            textureMeteorTrail = new AssetBitmapTexture(this.admRecursos.actividadJuego.getTextureManager(),
+                    this.admRecursos.actividadJuego.getAssets(), LEVEL_FOLDER + requestLevelID() + METEOR_TRAIL_NAME);
+            regionMeteorTrail = TextureRegionFactory.extractFromTexture(textureMeteorTrail);
+            textureMeteorTrail.load();
+        } catch (IOException e) {
+            Log.d("NIVEL ID: " + requestLevelID() , "No se pueden cargar la imagen" + METEOR_TRAIL_NAME);
+        }
+
+
+        //IN GAME LAGGER
+        try {
+            // *** Fondos para la animación en capas
+            textureInGameLagger = new AssetBitmapTexture(this.admRecursos.actividadJuego.getTextureManager(),
+                    this.admRecursos.actividadJuego.getAssets(), LEVEL_FOLDER + requestLevelID() + IN_LEVEL_LAGGER_NAME);
+            regionInGameLagger = TextureRegionFactory.extractFromTexture(textureInGameLagger);
+            textureInGameLagger.load();
+        } catch (IOException e) {
+            Log.d("NIVEL ID: " + requestLevelID() , "No se pueden cargar la imagen" + IN_LEVEL_LAGGER_NAME);
+        }
+
+        //IN GAME SPEEDER
+        try {
+            // *** Fondos para la animación en capas
+            textureInGameSpeeder = new AssetBitmapTexture(this.admRecursos.actividadJuego.getTextureManager(),
+                    this.admRecursos.actividadJuego.getAssets(), LEVEL_FOLDER + requestLevelID() + IN_LEVEL_SPEEDER_NAME);
+            regionInGameSpeeder = TextureRegionFactory.extractFromTexture(textureInGameSpeeder);
+            textureInGameSpeeder.load();
+        } catch (IOException e) {
+            Log.d("NIVEL ID: " + requestLevelID() , "No se pueden cargar la imagen" + IN_LEVEL_SPEEDER_NAME);
+        }
+
+
+    }
+
+    //__
+
+    public ITextureRegion getMeteorTrailTextureRegion()
+    {
+        return regionMeteorTrail;
+    }
+
+    public ITextureRegion getInGameLaggerRegion()
+    {
+        return regionInGameLagger;
+    }
+
+    public ITextureRegion getInGameSpeederRegion()
+    {
+        return regionInGameSpeeder;
+    }
+
+    public AutoParallaxBackground getAutoParallaxBackground() {
+
+        final float xLejos = regionBackground.getWidth()/2;
+        final float y = ControlJuego.ALTO_CAMARA/2;
+
+        final Sprite fondoLejos = new Sprite(xLejos,y, regionBackground,admRecursos.vbom);
+
+        AutoParallaxBackground fondo = new AutoParallaxBackground(0,1,0,1);
+        fondo.attachParallaxEntity(new ParallaxBackground.ParallaxEntity(0.5f,fondoLejos));
+        return fondo;
+    }
+
+    public Meteor getMeteor()
+    {
+        final Meteor meteor = new Meteor(ControlJuego.ANCHO_CAMARA/2, ControlJuego.ALTO_CAMARA - regionMeteor.getHeight() - 25 , regionMeteor,admRecursos.vbom);
+        return meteor;
+    }
+
+    public void unloadResources()
+    {
+        textureBackground.unload();
+        regionBackground = null;
+
+        textureMeteor.unload();
+        regionMeteor = null;
+
+        textureMeteorTrail.unload();
+        regionMeteorTrail = null;
+    }
+
+}

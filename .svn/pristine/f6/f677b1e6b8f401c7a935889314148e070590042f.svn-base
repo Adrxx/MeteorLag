@@ -1,0 +1,77 @@
+package com.example.adrian.meteorlag.Laggers;
+
+import android.util.Log;
+
+import com.example.adrian.meteorlag.GameAndScenes.MainGameScene;
+import com.example.adrian.meteorlag.GameAndScenes.ResourcesController;
+
+import org.andengine.entity.sprite.Sprite;
+import org.andengine.input.touch.TouchEvent;
+import org.andengine.opengl.texture.ITexture;
+import org.andengine.opengl.texture.region.ITextureRegion;
+import org.andengine.opengl.vbo.VertexBufferObjectManager;
+
+/**
+ * Created by Adrian on 4/5/15.
+ */
+public abstract class Lagger
+{
+    public class ClickableSprite extends Sprite
+    {
+        private boolean enabled = false;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public ClickableSprite(float pX, float pY, ITextureRegion pTextureRegion, VertexBufferObjectManager pVertexBufferObjectManager) {
+            super(pX, pY, pTextureRegion, pVertexBufferObjectManager);
+        }
+
+        public void doAction()
+        {
+            Log.d("TOUCH","ME");
+        }
+
+        @Override
+        public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+            if (pSceneTouchEvent.isActionUp() && isEnabled()) {
+                doAction();
+            }
+            return super.onAreaTouched(pSceneTouchEvent, pTouchAreaLocalX, pTouchAreaLocalY);
+        }
+    }
+
+    public ITexture buttonTexture;
+    public ITextureRegion buttonTextureRegion;
+
+    protected MainGameScene actingScene;
+
+    public abstract void actUponScene();
+    public abstract void loadLaggerResources();
+
+    public Lagger(MainGameScene scene)
+    {
+        this.actingScene = scene;
+        this.loadLaggerResources();
+    }
+
+    public ClickableSprite requestButtonSprite() {
+
+        return new ClickableSprite(0,0,buttonTextureRegion, ResourcesController.getInstance().vbom)
+        {
+            @Override
+            public void doAction() {
+                super.doAction();
+                Lagger.this.actUponScene();
+
+            }
+        };
+
+    }
+
+}

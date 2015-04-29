@@ -1,0 +1,12 @@
+package com.example.adrian.meteorlag;
+
+/**
+ * Created by Adrian on 2/5/15.
+ */
+
+public enum TipoEscena {
+    ESCENA_SPLASH,
+    ESCENA_MENU,
+    ESCENA_ACERCA_DE,
+    ESCENA_JUEGO
+}

@@ -1,0 +1,14 @@
+package com.example.adrian.meteorlag;
+
+/**
+ * Created by Adrian on 3/10/15.
+ */
+public interface GameMechanics
+{
+    void loadLevel(Level level);
+    void startGame();
+    void endGame();
+    void wonGame();
+    void gameOver();
+
+}

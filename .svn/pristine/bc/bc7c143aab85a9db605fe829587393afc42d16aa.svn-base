@@ -1,0 +1,55 @@
+package com.example.adrian.meteorlag.GameAndScenes.Interface;
+
+import com.example.adrian.meteorlag.GameAndScenes.ResourcesController;
+
+import org.andengine.entity.Entity;
+import org.andengine.entity.text.Text;
+import org.andengine.util.adt.color.Color;
+
+/**
+ * Created by Adrian on 4/20/15.
+ */
+public class TextTimer extends Entity {
+
+    public Text textTimer;
+    public double secs = 0;
+    public double mins = 0;
+
+    public TextTimer(float pX, float pY, float pWidth, float pHeight) {
+        super(pX, pY, pWidth, pHeight);
+
+        this.textTimer = ResourcesController.getInstance().generateText("0:00",this.getWidth()/2,this.getHeight()/2,80,0xFFFFFFFF);
+
+        this.attachChild(this.textTimer);
+    }
+
+
+    public void resetTimer()
+    {
+        this.textTimer.setText("0:00");
+    }
+
+    public void setTimerTime(float secs)
+    {
+        this.mins = Math.floor(60.0/secs);
+        this.secs = secs - (60*this.mins);
+
+        this.setTimer(this.mins,this.secs);
+
+    }
+    public void updateTimer(float value)
+    {
+        this.secs -= value;
+
+        if (this.secs < 0)
+        {
+            this.secs = 59;
+            this.mins -= 1;
+        }
+    }
+
+    public void setTimer(double m, double s)
+    {
+        this.textTimer.setText( m + ":" + s);
+    }
+}

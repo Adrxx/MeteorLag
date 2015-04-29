@@ -1,0 +1,362 @@
+package com.example.adrian.meteorlag;
+
+import android.opengl.GLES20;
+
+import org.andengine.entity.IEntityFactory;
+import org.andengine.entity.modifier.MoveYModifier;
+import org.andengine.entity.particle.ParticleSystem;
+import org.andengine.entity.particle.emitter.PointParticleEmitter;
+import org.andengine.entity.particle.initializer.AlphaParticleInitializer;
+import org.andengine.entity.particle.initializer.BlendFunctionParticleInitializer;
+import org.andengine.entity.particle.initializer.ColorParticleInitializer;
+import org.andengine.entity.particle.initializer.ExpireParticleInitializer;
+import org.andengine.entity.particle.initializer.RotationParticleInitializer;
+import org.andengine.entity.particle.initializer.ScaleParticleInitializer;
+import org.andengine.entity.particle.initializer.VelocityParticleInitializer;
+import org.andengine.entity.particle.modifier.AlphaParticleModifier;
+import org.andengine.entity.particle.modifier.RotationParticleModifier;
+import org.andengine.entity.particle.modifier.ScaleParticleModifier;
+import org.andengine.entity.primitive.Rectangle;
+import org.andengine.entity.scene.background.AutoParallaxBackground;
+import org.andengine.entity.sprite.Sprite;
+import org.andengine.input.sensor.acceleration.AccelerationData;
+import org.andengine.input.sensor.acceleration.IAccelerationListener;
+import org.andengine.opengl.texture.region.ITextureRegion;
+import org.andengine.util.adt.color.Color;
+import org.andengine.util.system.SystemUtils;
+
+import java.util.ArrayList;
+
+/**
+ * Created by Adrian on 2/12/15.
+ */
+public class EscenaJuego extends EscenaBase implements GameMechanics, IAccelerationListener
+{
+    //ALL METEOR PROPERIES USED IN THE REAL-TIME SIMULATION
+    private Level currentLevel;
+
+    private float meteorVelocity;
+    private float meteorAcceleration;
+    private float meteorHeight;
+
+    private float meteorResistance;
+
+    private float energy;
+
+    public Meteor meteor;
+    public Meteor miniMeteor;
+    public Rectangle minTimeIndicator;
+
+    public ITextureRegion meteorTrailTextureRegion;
+    public ITextureRegion inGameLaggerRegion;
+    public ITextureRegion inGameSpeederRegion;
+
+    public PointParticleEmitter trailEmmiter;
+
+    public FinalLagWeapon finalLagWeapon;
+    public LagBar lagBar;
+    public FinalLagBar finalLagBar;
+    public AutoParallaxBackground autoParallaxBackground;
+
+    // GAME MECHANICS INTERNAL PROPERIES
+
+    private float eleapsedTime;
+
+    private float inGameLaggerTimer = 0.0f;
+    private float inGameSpeederTimer;
+
+    private ArrayList<Sprite> inGameLaggers = new ArrayList<>();
+    private ArrayList<Sprite> inGameSpeeders = new ArrayList<>();
+
+
+
+    @Override
+    protected void onManagedUpdate(float pSecondsElapsed) {
+        super.onManagedUpdate(pSecondsElapsed);
+        eleapsedTime += pSecondsElapsed;
+
+        this.meteorVelocity = this.meteorVelocity + this.meteorAcceleration * pSecondsElapsed;
+        this.meteorHeight = this.meteorHeight - this.meteorVelocity * pSecondsElapsed;
+
+        updateHeightIndicator(meteorHeight);
+        updateMinTimeIndicator();
+        updateEnergyIndicator(this.lagBar.getFill() + 0.02f);
+
+        this.autoParallaxBackground.setParallaxChangePerSecond(this.meteorVelocity);
+
+        //INGAME LAGGER
+        inGameLaggerTimer += pSecondsElapsed;
+        if ( inGameLaggerTimer > 0.4 +(10.0f * Math.random()) && this.meteorVelocity > this.currentLevel.requestInitialVelocity())
+        {
+            spawnInGameLagger();
+            inGameLaggerTimer = 0.0f;
+        }
+
+        for(int i=inGameLaggers.size()-1; i>=0; i--) {
+            Sprite sp = inGameLaggers.get(i);
+
+            sp.setY(sp.getY() + this.meteorVelocity *pSecondsElapsed);
+
+            if (meteor.collidesWith(sp) ) {   // ¿Chocó?
+                this.meteorVelocity *= 0.8f;
+                updateEnergyIndicator(this.lagBar.getFill() + 1f);
+                sp.detachSelf(); // detachChild(sp);    // Ambas son equivalentes
+                inGameLaggers.remove(sp);
+            }
+        }
+
+        //INGAME SPEEDER
+        inGameSpeederTimer += pSecondsElapsed;
+        if ( inGameSpeederTimer > 0.1 +(5.0f * Math.random()) && this.meteorVelocity > this.currentLevel.requestInitialVelocity())
+        {
+            spawnInGameSpeeder();
+            inGameSpeederTimer = 0.0f;
+        }
+        for(int i=inGameSpeeders.size()-1; i>=0; i--)
+        {
+            Sprite sp = inGameSpeeders.get(i);
+
+            sp.setY(sp.getY() + this.meteorVelocity *pSecondsElapsed);
+
+            if (meteor.collidesWith(sp) ) {   // ¿Chocó?
+                this.meteorVelocity *= 1.1f;
+                updateEnergyIndicator(this.lagBar.getFill() - 0.5f);
+
+                sp.detachSelf(); // detachChild(sp);    // Ambas son equivalentes
+                inGameSpeeders.remove(sp);
+            }
+        }
+
+        //METEOR EFFECTS
+        this.meteor.setRotation(this.meteor.getRotation()+1);
+    }
+
+    @Override
+    public void onAccelerationAccuracyChanged(AccelerationData pAccelerationData) {
+
+    }
+
+    @Override
+    public void onAccelerationChanged(AccelerationData pAccelerationData)
+    {
+        float newX = meteor.getX() + ((pAccelerationData.getX()/10*ControlJuego.ANCHO_CAMARA/2)/this.meteorResistance);
+
+        if (newX < (meteor.getWidth()/2) ) { newX = (meteor.getWidth()/2); }
+        if (newX > ControlJuego.ANCHO_CAMARA - (meteor.getWidth()/2) ) { newX = ControlJuego.ANCHO_CAMARA - (meteor.getWidth()/2); }
+
+        this.trailEmmiter.setCenterX(newX);
+        meteor.setX(newX);
+    }
+
+
+    private void spawnInGameLagger()
+    {
+        Sprite l = new Sprite(ControlJuego.ANCHO_CAMARA* (float)Math.random() , 0 ,this.inGameLaggerRegion,admRecursos.vbom);
+        this.inGameLaggers.add(l);
+        attachChild(l);
+    }
+
+    private void spawnInGameSpeeder()
+    {
+        Sprite l = new Sprite(ControlJuego.ANCHO_CAMARA* (float)Math.random() , 0 ,this.inGameSpeederRegion,admRecursos.vbom);
+        this.inGameSpeeders.add(l);
+        attachChild(l);
+    }
+
+    private void addLagBar()
+    {
+
+        this.lagBar = new LagBar(0,0,admRecursos);
+        this.lagBar.setPosition(this.lagBar.getWidth()/2,ControlJuego.ALTO_CAMARA/2);
+        this.lagBar.setZIndex(100);
+        attachChild(lagBar);
+    }
+
+    private void addMeteorTrail()
+    {
+
+        IEntityFactory<Sprite> ief = new IEntityFactory<Sprite>() {
+            @Override
+            public Sprite create(float pX, float pY) {
+                return new Sprite(pX,pY,meteorTrailTextureRegion,admRecursos.vbom);
+            }
+        };
+
+        this.trailEmmiter = new PointParticleEmitter(meteor.getWidth()/2,meteor.getY());
+
+        final ParticleSystem<Sprite> sistema = new ParticleSystem<Sprite>(ief,this.trailEmmiter,20,50,200);
+
+        sistema.addParticleInitializer(new BlendFunctionParticleInitializer<Sprite>(
+                GLES20.GL_SRC_ALPHA,GLES20.GL_ONE));
+
+        sistema.addParticleInitializer(new ColorParticleInitializer<Sprite>(1,0.5f,0));
+        sistema.addParticleInitializer(new AlphaParticleInitializer<Sprite>(0));
+        sistema.addParticleInitializer(new VelocityParticleInitializer<Sprite>(-meteor.getWidth(),meteor.getWidth(),180,210));
+        float tiempoVida = 4.5f;   // Segundos de vida de cada partícula
+        sistema.addParticleInitializer(new ExpireParticleInitializer<Sprite>(tiempoVida));
+        sistema.addParticleInitializer(new ScaleParticleInitializer<Sprite>(3.0f));
+        sistema.addParticleInitializer(new RotationParticleInitializer<Sprite>(0, 360));
+        sistema.addParticleModifier(new AlphaParticleModifier<Sprite>(0,0.5f,0,0.2f));
+        sistema.addParticleModifier(new AlphaParticleModifier<Sprite>(tiempoVida-2,tiempoVida+1,0.2f,0f));
+        sistema.addParticleModifier(new ScaleParticleModifier<Sprite>(tiempoVida-2,tiempoVida+1,1.0f,3.0f));
+        sistema.addParticleModifier(new RotationParticleModifier<Sprite>(1,3,0,360));
+
+        // Se agrega a la escena, como cualquier Sprite
+        attachChild(sistema);
+        //sistema.setZIndex(-1);
+    }
+
+    private void addHeightIndicator()
+    {
+        Sprite ind = new Sprite(ControlJuego.ANCHO_CAMARA - admRecursos.regionHeightIndicator.getWidth(),ControlJuego.ALTO_CAMARA/2,admRecursos.regionHeightIndicator,admRecursos.vbom);
+        attachChild(ind);
+
+        this.miniMeteor= this.currentLevel.getMeteor();
+
+        miniMeteor.setScale(0.35f);
+
+        miniMeteor.setPosition(ind.getWidth() / 2, ind.getHeight());
+        ind.attachChild(miniMeteor);
+    }
+
+    private void updateEnergyIndicator(float percentage)
+    {
+       this.lagBar.setFill(percentage);
+    }
+
+    private void updateHeightIndicator(float actualHeight)
+    {
+        float indY = actualHeight/this.currentLevel.requestInitialHeight() * admRecursos.regionHeightIndicator.getHeight();
+        indY = Math.max(indY,0.0f);
+        this.miniMeteor.setY(indY);
+
+        if (indY <= 0) { gameOver(); }
+    }
+
+    private void updateMinTimeIndicator()
+    {
+        float indWidth = this.eleapsedTime/this.currentLevel.requestMinLevelTime() * ControlJuego.ANCHO_CAMARA*2;
+        indWidth = Math.min(indWidth,ControlJuego.ANCHO_CAMARA*2);
+        this.minTimeIndicator.setWidth(indWidth);
+
+        if (indWidth <= 0) { wonGame(); }
+    }
+
+    private void addMinTimeIndicator()
+    {
+        Rectangle indBg = new Rectangle(0,0,0,1,admRecursos.vbom);
+        indBg.setColor(Color.BLACK);
+        indBg.setHeight(20.0f);
+        indBg.setWidth(ControlJuego.ANCHO_CAMARA*2);
+
+        indBg.setPosition(0,indBg.getHeight());
+
+        attachChild(indBg);
+
+        this.minTimeIndicator = new Rectangle(0,0,0,1,admRecursos.vbom);
+        minTimeIndicator.setColor(Color.RED);
+        minTimeIndicator.setHeight(20.0f);
+        minTimeIndicator.setWidth(0);
+        minTimeIndicator.setPosition(0,minTimeIndicator.getHeight());
+
+        attachChild(minTimeIndicator);
+    }
+
+
+    //GAME MECHANICS INTERFACE
+    @Override
+    public void loadLevel(Level level) {
+
+        this.currentLevel = level;
+        //Carga las propiedades del nivel actual
+        this.meteorAcceleration = level.requestInitialAcceleration();
+        this.meteorVelocity = level.requestInitialVelocity();
+        this.meteorResistance = level.requestMeteorMoveResistance();
+        this.meteorHeight = level.requestInitialHeight();
+        //this.meteorHeight = level.getInitialHeight();
+        //this.meteorHeight = level.getInitialVelocity();
+
+        this.autoParallaxBackground = level.getAutoParallaxBackground();
+        setBackground(this.autoParallaxBackground);
+        setBackgroundEnabled(true);
+
+        this.meteor = level.getMeteor();
+        attachChild(this.meteor);
+
+        this.meteorTrailTextureRegion = level.getMeteorTrailTextureRegion();
+        addMeteorTrail();
+
+        admRecursos.engine.enableAccelerationSensor(admRecursos.actividadJuego,this);
+
+        this.inGameLaggerRegion = level.getInGameLaggerRegion();
+        this.inGameSpeederRegion = level.getInGameSpeederRegion();
+
+        //this.autoParallaxBackground.
+
+    }
+
+    @Override
+    public void startGame() {
+
+
+    }
+
+    @Override
+    public void endGame() {
+
+    }
+
+    @Override
+    public void wonGame() {
+
+        onBackKeyPressed();
+
+    }
+
+    @Override
+    public void gameOver()
+    {
+        onBackKeyPressed();
+    }
+
+
+    //ESCENA BASE ABSTRACT METHODS _______
+    @Override
+    public void crearEscena()
+    {
+        Level1Earth level1 = new Level1Earth(this.admRecursos);
+        loadLevel(level1); //CARGA EL PRIMER NIVEL
+
+        addHeightIndicator();
+
+        addMinTimeIndicator();
+        addLagBar();
+    }
+
+    @Override
+    public void onBackKeyPressed() {
+        // Regresar al MENU principal
+
+        this.currentLevel.unloadResources();
+
+        admRecursos.engine.disableAccelerationSensor(admRecursos.actividadJuego);
+        admEscenas.crearEscenaMenu();
+        admEscenas.setEscena(TipoEscena.ESCENA_MENU);
+        admEscenas.liberarEscenaJuego();
+    }
+
+    @Override
+    public TipoEscena getTipoEscena()
+    {
+        return TipoEscena.ESCENA_JUEGO;
+    }
+
+    @Override
+    public void liberarEscena() {
+        // Liberar cada recurso usado en esta escena
+
+        this.detachSelf();      // La escena se deconecta del engine
+        this.dispose();         // Libera la memoria
+    }
+
+}
