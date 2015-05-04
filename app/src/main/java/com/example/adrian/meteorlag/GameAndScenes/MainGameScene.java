@@ -25,8 +25,6 @@ import org.andengine.input.sensor.acceleration.IAccelerationListener;
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.texture.region.ITextureRegion;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -42,7 +40,7 @@ public class MainGameScene extends BaseScene implements GameMechanics, IAccelera
     public float meteorAcceleration;
     public float meteorHeight;
     public float meteorResistance;
-    public float minLevelTime;
+    public float timeEleapsed;
 
 
     //LEVEL LAYERS
@@ -60,6 +58,7 @@ public class MainGameScene extends BaseScene implements GameMechanics, IAccelera
     private ITextureRegion inGameSpeederRegion;
 
     private ButtonSprite pauseButton;
+    private Sprite finalLag;
     private Meteor meteor;
     private HeightIndicator heightIndicator;
     private TextTimer textTimer;
@@ -72,7 +71,7 @@ public class MainGameScene extends BaseScene implements GameMechanics, IAccelera
     private VerticalGameBackground verticalGameBackground;
 
     // GAME MECHANICS INTERNAL PROPERTIES
-    private float timeEleapsed;
+    private boolean canWin = false;
 
     private float inGameLaggerTimer = 0.0f;
     private float inGameSpeederTimer = 0.0f;
@@ -90,10 +89,40 @@ public class MainGameScene extends BaseScene implements GameMechanics, IAccelera
             case GAME_STARTING:
                 this.verticalGameBackground.setParallaxChangePerSecond(this.meteorVelocity);
                 break;
-            case GAME_PLAYING:
-               // this.time -= pSecondsElapsed;
 
-               // this.textTimer.updateTimeInSecs(this.);
+            case GAME_ENDING:
+                this.timeEleapsed -= pSecondsElapsed;
+                this.textTimer.updateTimeInSecs(this.timeEleapsed);
+
+                this.meteorVelocity = Math.min(this.meteorVelocity + this.meteorAcceleration * pSecondsElapsed,2500.0f);
+                this.meteorHeight = this.meteorHeight - this.meteorVelocity * pSecondsElapsed;
+
+                this.verticalGameBackground.setParallaxChangePerSecond(this.meteorVelocity);
+                this.trailVelocityParticleInitializer.setVelocityY(this.meteorVelocity/3);
+
+                Log.d("---->", "NEEDED H: " +(-GameControl.CAMERA_HEIGHT/0.15f) + " ACTUAL:: " + this.meteorHeight);
+                if (this.meteorHeight <= -GameControl.CAMERA_HEIGHT/0.15f){
+
+                    this.meteorHeight = -GameControl.CAMERA_HEIGHT/0.15f;
+
+                    this.verticalGameBackground.setParallaxChangePerSecond(this.meteorVelocity);
+                    this.trailVelocityParticleInitializer.setVelocityY(this.meteorVelocity/3);
+
+                    winGame();
+                }
+
+
+                break;
+            case GAME_PLAYING:
+                this.canWin = (timeEleapsed > 0);
+
+                if (this.meteorHeight <= 0)
+                {
+                    this.endGameplay();
+                }
+
+
+                this.textTimer.updateTimeInSecs(this.timeEleapsed);
 
                 this.meteorVelocity = Math.min(this.meteorVelocity + this.meteorAcceleration * pSecondsElapsed,2000.0f);
                 this.meteorHeight = this.meteorHeight - this.meteorVelocity * pSecondsElapsed;
@@ -101,19 +130,22 @@ public class MainGameScene extends BaseScene implements GameMechanics, IAccelera
                 this.verticalGameBackground.setParallaxChangePerSecond(this.meteorVelocity);
                 this.trailVelocityParticleInitializer.setVelocityY(this.meteorVelocity/3);
 
+                this.heightIndicator.updateHeightIndicator(this.meteorHeight/this.currentLevel.getAdjustedHeight());
 
-                if (!this.heightIndicator.hasReachedBottom)
-                {
-                    this.heightIndicator.updateHeightIndicator(this.meteorHeight/this.currentLevel.propierties.getHeight());
-                }
-                else
-                {
-                    gameOver();
-                }
-
-                this.lagBar.incrementFillBy(0.03f);
+                this.lagBar.incrementFillBy(0.05f);
                 this.lagBar.updateTimesToLaggers(pSecondsElapsed); //TO WEAR OFF LAGGERS AS THEY END.
 
+                /*
+                for (Stop s: this.currentLevel.propierties.getStops())
+                {
+                    if (this.meteorHeight <= s.getAt())
+                    {
+                        Log.d("TEST", s.getText());
+                    }
+                }
+                */
+
+/*
                 //INGAME LAGGER
                 inGameLaggerTimer += pSecondsElapsed;
                 if ( inGameLaggerTimer > 0.3 +(10.0f * Math.random()) && this.meteorVelocity > this.currentLevel.propierties.getVelocity())
@@ -158,11 +190,10 @@ public class MainGameScene extends BaseScene implements GameMechanics, IAccelera
                     }
                 }
 
+*/
 
                 break;
             case GAME_PAUSED:
-                break;
-            case GAME_ENDING:
                 break;
             case GAME_OVER:
                 break;
@@ -210,34 +241,6 @@ public class MainGameScene extends BaseScene implements GameMechanics, IAccelera
 
 
     //GAME MECHANICS INTERFACE
-    @Override
-    public void loadLevel(Level level) {
-        this.currentLevel = level;
-        //Carga las propiedades del nivel actual SOLO LAS CARGA NO DEBE PONERLAS EN ESCENA AÚN
-
-        this.meteorAcceleration = level.propierties.getAcceleration();
-        this.meteorVelocity = level.propierties.getVelocity();
-        this.meteorResistance = level.propierties.getResistance();
-        this.meteorHeight = level.propierties.getHeight();
-        this.timeEleapsed = level.propierties.getTime();
-
-        this.levelTitle = resourcesController.generateText(level.propierties.getTitle(),GameControl.CAMERA_WIDTH/2,GameControl.CAMERA_HEIGHT/2 + 50,90,0xFFFFFFFF);
-        this.levelSubtitle = resourcesController.generateText(level.propierties.getSubtitle(),GameControl.CAMERA_WIDTH/2,GameControl.CAMERA_HEIGHT/2 - 10,50,0xFFFFFFFF);
-        this.tapToStartText = resourcesController.generateText("Toque para iniciar",GameControl.CAMERA_WIDTH/2,GameControl.CAMERA_HEIGHT/2 - 60,32,0xFFFFFFFF);
-
-        this.verticalGameBackground = level.getParallaxBackground();
-        setBackground(this.verticalGameBackground);
-        setBackgroundEnabled(true);
-
-        this.meteor = level.getMeteor();
-        this.lagBar = level.getLagBar();
-
-        this.trailParticleSystem = level.getTrailParticleSystem();
-        this.trailEmmiter = (CircleParticleEmitter) this.trailParticleSystem.getParticleEmitter();
-
-        this.inGameLaggerRegion = level.getInGameLaggerRegion();
-        this.inGameSpeederRegion = level.getInGameSpeederRegion();
-    }
 
 
     @Override
@@ -262,21 +265,42 @@ public class MainGameScene extends BaseScene implements GameMechanics, IAccelera
     public void endGameplay()
     {
         this.gameStatus = GameStatus.GAME_ENDING;
+        this.interfaceLayer.detachSelf();
+
+
+        if (this.canWin)
+        {
+
+        }
+        else
+        {
+
+        }
+
+        this.verticalGameBackground.startEndingSequence();
+
+
+
     }
 
     @Override
     public void winGame()
     {
         this.gameStatus = GameStatus.GAME_WON;
-        onBackKeyPressed();
+        this.meteorVelocity = 0.0f;
+        this.meteorAcceleration = 0.0f;
+        this.verticalGameBackground.setParallaxChangePerSecond(this.meteorVelocity);
+        this.trailVelocityParticleInitializer.setVelocityY(this.meteorVelocity/3);
+
+        this.finalLag.setPosition(GameControl.CAMERA_WIDTH/2,+this.finalLag.getHeight()/2 );
+
     }
 
     @Override
     public void gameOver()
     {
-        this.verticalGameBackground.startEndingSequence();
-        this.meteorVelocity = 0.0f;
-        this.meteorAcceleration = 0.0f;
+        //this.verticalGameBackground.startEndingSequence();
+
         this.gameStatus = GameStatus.GAME_OVER;
     }
 
@@ -285,8 +309,7 @@ public class MainGameScene extends BaseScene implements GameMechanics, IAccelera
     public void createScene()
     {
 
-        Level l = new Level("Tierra",this.resourcesController);
-
+        Level l = new Level("Tierra",this,this.resourcesController);
 
         loadLevel(l);
 
@@ -313,12 +336,11 @@ public class MainGameScene extends BaseScene implements GameMechanics, IAccelera
             registerTouchArea(l.getButton());
         }
 
-        //this.pauseButton = ButtonSprite
         layer.attachChild(this.lagBar);
 
-       // this.textTimer = new TextTimer(60,GameControl.CAMERA_HEIGHT - 60,200,200);
-       // this.textTimer.setInitialSecs(this.minLevelTime);
-        //layer.attachChild(this.textTimer);
+        this.textTimer = new TextTimer(60,GameControl.CAMERA_HEIGHT - 60,200,200);
+        this.textTimer.updateTimeInSecs(this.currentLevel.propierties.getTime());
+        layer.attachChild(this.textTimer);
 
         this.heightIndicator =new HeightIndicator(0,0,this.meteor.getTextureRegion());
         this.heightIndicator.setPosition(GameControl.CAMERA_WIDTH-this.heightIndicator.getWidth()/2 -10.0f,GameControl.CAMERA_HEIGHT/2);
@@ -337,10 +359,15 @@ public class MainGameScene extends BaseScene implements GameMechanics, IAccelera
         this.trailVelocityParticleInitializer = new VelocityParticleInitializer(-20,20, this.meteorVelocity, this.meteorVelocity);
         this.trailParticleSystem.addParticleInitializer(this.trailVelocityParticleInitializer);
 
+
         // Se agrega a la escena, como cualquier Sprite
         layer.attachChild(trailParticleSystem);
         this.trailEmmiter.setCenterY(this.meteor.getY());
         this.trailEmmiter.setCenterX(meteor.getX()); //PARA QUE INICIE EN EL METEORO
+
+        this.finalLag.setPosition(GameControl.CAMERA_WIDTH/2,-this.finalLag.getHeight()/2 );
+        layer.attachChild(this.finalLag);
+
 
         return layer;
 
@@ -364,6 +391,37 @@ public class MainGameScene extends BaseScene implements GameMechanics, IAccelera
 
         return layer;
     }
+
+    @Override
+    public void loadLevel(Level level) {
+        this.currentLevel = level;
+        //Carga las propiedades del nivel actual SOLO LAS CARGA NO DEBE PONERLAS EN ESCENA AÚN
+
+        this.meteorAcceleration = level.propierties.getAcceleration();
+        this.meteorVelocity = level.propierties.getVelocity();
+        this.meteorResistance = level.propierties.getResistance();
+        this.meteorHeight = level.getAdjustedHeight();
+        this.timeEleapsed = level.propierties.getTime();
+
+        this.levelTitle = resourcesController.generateText(level.propierties.getTitle(),GameControl.CAMERA_WIDTH/2,GameControl.CAMERA_HEIGHT/2 + 50,90,0xFFFFFFFF);
+        this.levelSubtitle = resourcesController.generateText(level.propierties.getSubtitle(),GameControl.CAMERA_WIDTH/2,GameControl.CAMERA_HEIGHT/2 - 10,50,0xFFFFFFFF);
+        this.tapToStartText = resourcesController.generateText("Toque para iniciar",GameControl.CAMERA_WIDTH/2,GameControl.CAMERA_HEIGHT/2 - 60,32,0xFFFFFFFF);
+
+        this.verticalGameBackground = level.getParallaxBackground();
+        setBackground(this.verticalGameBackground);
+        setBackgroundEnabled(true);
+
+        this.meteor = level.getMeteor();
+        this.lagBar = level.getLagBar();
+        this.finalLag = level.getFinalLag();
+
+        this.trailParticleSystem = level.getTrailParticleSystem();
+        this.trailEmmiter = (CircleParticleEmitter) this.trailParticleSystem.getParticleEmitter();
+
+        this.inGameLaggerRegion = level.getInGameLaggerRegion();
+        this.inGameSpeederRegion = level.getInGameSpeederRegion();
+    }
+
 
     @Override
     public boolean onSceneTouchEvent(TouchEvent pSceneTouchEvent) {

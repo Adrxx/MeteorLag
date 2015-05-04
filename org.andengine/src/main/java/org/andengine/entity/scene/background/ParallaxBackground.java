@@ -1,5 +1,7 @@
 package org.andengine.entity.scene.background;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 
 import org.andengine.engine.camera.Camera;
@@ -25,6 +27,7 @@ public class ParallaxBackground extends Background {
 
 	private final ArrayList<ParallaxEntity> mParallaxEntities = new ArrayList<ParallaxEntity>();
 	private int mParallaxEntityCount;
+    public float offset = 0;
 
 	protected float mParallaxValue;
 
@@ -56,6 +59,10 @@ public class ParallaxBackground extends Background {
 		final ArrayList<ParallaxEntity> parallaxEntities = this.mParallaxEntities;
 
 		for (int i = 0; i < this.mParallaxEntityCount; i++) {
+            if (i == 0)
+            {
+                this.offset = parallaxEntities.get(i).offset;
+            }
 			parallaxEntities.get(i).onDraw(pGLState, pCamera, parallaxValue);
 		}
 	}
@@ -93,6 +100,7 @@ public class ParallaxBackground extends Background {
 
 		final float mParallaxFactor;
 		final IEntity mEntity;
+        float offset = 0;
 
 		// ===========================================================
 		// Constructors
@@ -127,6 +135,7 @@ public class ParallaxBackground extends Background {
 		public void onDraw(final GLState pGLState, final Camera pCamera, final float pParallaxValue) {
 			pGLState.pushModelViewGLMatrix();
 			{
+
 				final float cameraWidth = pCamera.getHeight();
 				final float entityWidthScaled = this.mEntity.getHeight() * this.mEntity.getScaleY();
 				float baseOffset = (pParallaxValue * this.mParallaxFactor) % entityWidthScaled;
@@ -143,7 +152,9 @@ public class ParallaxBackground extends Background {
 					pGLState.translateModelViewGLMatrixf(0, entityWidthScaled, 0);
 					currentMaxX += entityWidthScaled;
 				} while (currentMaxX < (cameraWidth + entityWidthScaled ));
-			}
+
+                this.offset = Math.abs(baseOffset);
+            }
 			pGLState.popModelViewGLMatrix();
 		}
 

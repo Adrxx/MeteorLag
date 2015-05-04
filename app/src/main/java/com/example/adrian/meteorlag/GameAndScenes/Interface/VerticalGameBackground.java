@@ -35,16 +35,15 @@ public class VerticalGameBackground extends AutoParallaxBackground
         Sprite eS = new Sprite(x,0, endingRegion,resourcesController.vbom);
 
         this.repeatingPE = new ParallaxBackground.ParallaxEntity(0.15f,rS);
-        this.endingPE = new ParallaxBackground.ParallaxEntity(0.5f,eS);
+        this.endingPE = new ParallaxBackground.ParallaxEntity(0.15f,eS);
 
         this.attachParallaxEntity(repeatingPE);
-
     }
 
     public void startEndingSequence()
     {
 
-        this.detachParallaxEntity(repeatingPE);
+        //this.detachParallaxEntity(repeatingPE);
         this.attachParallaxEntity(endingPE);
     }
 

@@ -11,7 +11,6 @@ import com.example.adrian.meteorlag.GameAndScenes.Laggers.MissileLagger;
 import com.example.adrian.meteorlag.GameAndScenes.Laggers.SuperMissileLagger;
 import com.example.adrian.meteorlag.Meteor;
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 
 import org.andengine.entity.IEntityFactory;
@@ -30,9 +29,6 @@ import org.andengine.opengl.texture.bitmap.AssetBitmapTexture;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.texture.region.TextureRegionFactory;
 
-import java.io.FileDescriptor;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -44,9 +40,8 @@ import java.util.ArrayList;
 public class Level
 {
     final static public String LEVEL_FOLDER = "Levels/";
-    final static public String INTERFACE_FOLDER = "Interface/";
 
-    final static public String DATA_FILE = "data.json";
+    final static public String DATA_FILE = "/data.json";
     final static public String BACKGROUND_FILE = "/bg.png";
     final static public String BACKGROUND_FILE_MIDDLE = "/bg_m.png";
     final static public String BACKGROUND_FILE_TOP = "/bg_t.png";
@@ -56,6 +51,8 @@ public class Level
     final static public String METEOR_TRAIL_FILE = "/trail.png";
     final static public String IN_LEVEL_LAGGER_FILE = "/lagger.png";
     final static public String IN_LEVEL_SPEEDER_FILE = "/speeder.png";
+    final static public String FINAL_LAG_FILE = "/finallag.png";
+
 
     protected ResourcesController resourcesController;
     protected MainGameScene scene;
@@ -81,35 +78,21 @@ public class Level
     private ITexture textureInGameSpeeder;
     public ITextureRegion regionInGameSpeeder;
 
-    private ITexture textureWeaponLaggerMissile;
-    public ITextureRegion regionWeaponLaggerMissile;
+    private ITexture textureFinalLag;
+    public ITextureRegion regionFinalLag;
 
-    private ITexture textureWeaponLaggerSuperMissile;
-    public ITextureRegion regionWeaponLaggerSuperMissile;
-
-    private ITexture textureWeaponLaggerPortal;
-    public ITextureRegion regionWeaponLaggerPortal;
-
-    private ITexture textureWeaponLaggerAntigravity;
-    public ITextureRegion regionWeaponLaggerAntigravity;
-
-    private ITexture textureWeaponLaggerSpecial;
-    public ITextureRegion regionWeaponLaggerSpecial;
 
     private String id;
     public LevelJSON propierties;
 
-    public Level(String id,ResourcesController adm){
+    public Level(String id,MainGameScene scene,ResourcesController adm){
         this.id = id;
+        this.scene = scene;
         this.resourcesController = adm;
+
         final Gson gson = new Gson();
-        JsonParser parser = new JsonParser();
-
-        listAssetFiles("");
-
-        LevelJSON propierties =  gson.fromJson(loadJSONFromAsset("data.json"), LevelJSON.class);
-        this.propierties = propierties;
-
+        this.propierties = gson.fromJson(loadJSONFromAsset(LEVEL_FOLDER+id+DATA_FILE), LevelJSON.class);
+        //this.propierties.setHeight(  );
         loadResources();
     }
 
@@ -132,28 +115,18 @@ public class Level
 
         } catch (IOException ex) {
             ex.printStackTrace();
+            Log.d("JSON","ERROR LOADING JSON");
             return null;
         }
         return json;
 
     }
 
-    private boolean listAssetFiles(String path) {
-
-        String [] list;
-        try {
-            list = this.resourcesController.gameControl.getAssets().list(path);
-
-                for (String file : list) {
-                    Log.d("JSOOOOON",(path + "/" + file));
-                }
-
-        } catch (IOException e) {
-                return false;
-         }
-
-            return true;
+    public float getAdjustedHeight()
+    {
+        return (this.propierties.getHeight() * GameControl.CAMERA_HEIGHT*2/0.15f);
     }
+
 
     public void loadResources()
     {
@@ -239,6 +212,16 @@ public class Level
             Log.d("NIVEL ID: " + this.id , "No se pueden cargar la imagen" + IN_LEVEL_SPEEDER_FILE);
         }
 
+        //FINAL LAG
+        try {
+            textureFinalLag = new AssetBitmapTexture(this.resourcesController.gameControl.getTextureManager(),
+                    this.resourcesController.gameControl.getAssets(), LEVEL_FOLDER + this.id + FINAL_LAG_FILE);
+            regionFinalLag = TextureRegionFactory.extractFromTexture(textureFinalLag);
+            textureFinalLag.load();
+        } catch (IOException e) {
+            Log.d("NIVEL ID: " + this.id , "No se pueden cargar la imagen" + FINAL_LAG_FILE);
+        }
+
     }
 
     public ITextureRegion getInGameLaggerRegion()
@@ -248,7 +231,7 @@ public class Level
 
     public ITextureRegion getInGameSpeederRegion()
     {
-        return regionInGameSpeeder;
+        return regionFinalLag;
     }
 
     public VerticalGameBackground getParallaxBackground()
@@ -311,6 +294,11 @@ public class Level
 
     }
 
+    public Sprite getFinalLag()
+    {
+        return new Sprite(0,0,regionFinalLag,resourcesController.vbom);
+    }
+
 
 
     public void unloadResources()
@@ -324,23 +312,11 @@ public class Level
         textureMeteorTrail.unload();
         regionMeteorTrail = null;
 
-        textureInGameSpeeder.unload();
-        regionInGameSpeeder = null;
+        textureFinalLag.unload();
+        regionFinalLag = null;
 
         textureInGameLagger.unload();
         regionInGameLagger = null;
-
-        textureWeaponLaggerMissile.unload();
-        regionWeaponLaggerMissile = null;
-
-        textureWeaponLaggerSuperMissile.unload();
-        regionWeaponLaggerSuperMissile = null;
-
-        textureWeaponLaggerPortal.unload();
-        regionWeaponLaggerPortal = null;
-
-        textureWeaponLaggerAntigravity.unload();
-        regionWeaponLaggerAntigravity = null;
 
     }
 
