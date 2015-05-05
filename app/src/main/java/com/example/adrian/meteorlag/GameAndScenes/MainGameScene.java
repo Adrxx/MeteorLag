@@ -1,7 +1,5 @@
 package com.example.adrian.meteorlag.GameAndScenes;
 
-import android.util.Log;
-
 import com.example.adrian.meteorlag.GameAndScenes.Interface.EntityLayer;
 import com.example.adrian.meteorlag.GameAndScenes.Interface.HeightIndicator;
 import com.example.adrian.meteorlag.GameAndScenes.Interface.TextTimer;
@@ -10,13 +8,20 @@ import com.example.adrian.meteorlag.GameAndScenes.Laggers.Lagger;
 import com.example.adrian.meteorlag.Meteor;
 import com.example.adrian.meteorlag.GameAndScenes.Interface.VerticalGameBackground;
 
+import org.andengine.engine.handler.timer.ITimerCallback;
+import org.andengine.engine.handler.timer.TimerHandler;
 import org.andengine.entity.IEntity;
 import org.andengine.entity.modifier.AlphaModifier;
+import org.andengine.entity.modifier.DelayModifier;
 import org.andengine.entity.modifier.LoopEntityModifier;
+import org.andengine.entity.modifier.MoveModifier;
+import org.andengine.entity.modifier.MoveYModifier;
 import org.andengine.entity.modifier.SequenceEntityModifier;
 import org.andengine.entity.particle.ParticleSystem;
 import org.andengine.entity.particle.emitter.CircleParticleEmitter;
+import org.andengine.entity.particle.emitter.PointParticleEmitter;
 import org.andengine.entity.particle.initializer.VelocityParticleInitializer;
+import org.andengine.entity.sprite.AnimatedSprite;
 import org.andengine.entity.sprite.ButtonSprite;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.text.Text;
@@ -47,6 +52,7 @@ public class MainGameScene extends BaseScene implements GameMechanics, IAccelera
     public EntityLayer interfaceLayer;
     public EntityLayer infoLayer;
     public EntityLayer gameLayer;
+    public EntityLayer finalLagLayer;
     public EntityLayer effectsLayer;
 
     // LEVEL RESOURCES
@@ -58,13 +64,23 @@ public class MainGameScene extends BaseScene implements GameMechanics, IAccelera
     private ITextureRegion inGameSpeederRegion;
 
     private ButtonSprite pauseButton;
-    private Sprite finalLag;
+    private AnimatedSprite explosion;
+    private AnimatedSprite explosionCrash;
     private Meteor meteor;
     private HeightIndicator heightIndicator;
     private TextTimer textTimer;
 
+
+    private Sprite finalLagBackground;
+    private Sprite finalLag;
+
     private ParticleSystem<Sprite> trailParticleSystem;
     private CircleParticleEmitter trailEmmiter;
+
+    private ParticleSystem<Sprite> finalLagLaserParticleSystem;
+    private PointParticleEmitter finalLagLaserEmitter;
+
+
     private VelocityParticleInitializer trailVelocityParticleInitializer;
 
     public LagBar lagBar;
@@ -92,45 +108,27 @@ public class MainGameScene extends BaseScene implements GameMechanics, IAccelera
 
             case GAME_ENDING:
                 this.timeEleapsed -= pSecondsElapsed;
+                this.canWin = (timeEleapsed > 0);
+
                 this.textTimer.updateTimeInSecs(this.timeEleapsed);
-
-                this.meteorVelocity = Math.min(this.meteorVelocity + this.meteorAcceleration * pSecondsElapsed,2500.0f);
                 this.meteorHeight = this.meteorHeight - this.meteorVelocity * pSecondsElapsed;
-
-                this.verticalGameBackground.setParallaxChangePerSecond(this.meteorVelocity);
-                this.trailVelocityParticleInitializer.setVelocityY(this.meteorVelocity/3);
-
-                Log.d("---->", "NEEDED H: " +(-GameControl.CAMERA_HEIGHT/0.15f) + " ACTUAL:: " + this.meteorHeight);
-                if (this.meteorHeight <= -GameControl.CAMERA_HEIGHT/0.15f){
-
-                    this.meteorHeight = -GameControl.CAMERA_HEIGHT/0.15f;
-
-                    this.verticalGameBackground.setParallaxChangePerSecond(this.meteorVelocity);
-                    this.trailVelocityParticleInitializer.setVelocityY(this.meteorVelocity/3);
-
-                    winGame();
-                }
-
-
                 break;
             case GAME_PLAYING:
-                this.canWin = (timeEleapsed > 0);
+                this.timeEleapsed -= pSecondsElapsed;
+                this.textTimer.updateTimeInSecs(this.timeEleapsed);
+
+                this.meteorVelocity = Math.min(this.meteorVelocity + this.meteorAcceleration * pSecondsElapsed,2000.0f);
+                this.meteorHeight = this.meteorHeight - this.meteorVelocity * pSecondsElapsed;
 
                 if (this.meteorHeight <= 0)
                 {
                     this.endGameplay();
                 }
 
-
-                this.textTimer.updateTimeInSecs(this.timeEleapsed);
-
-                this.meteorVelocity = Math.min(this.meteorVelocity + this.meteorAcceleration * pSecondsElapsed,2000.0f);
-                this.meteorHeight = this.meteorHeight - this.meteorVelocity * pSecondsElapsed;
-
                 this.verticalGameBackground.setParallaxChangePerSecond(this.meteorVelocity);
                 this.trailVelocityParticleInitializer.setVelocityY(this.meteorVelocity/3);
 
-                this.heightIndicator.updateHeightIndicator(this.meteorHeight/this.currentLevel.getAdjustedHeight());
+                this.heightIndicator.updateHeightIndicator(this.meteorHeight/this.currentLevel.propierties.getHeight());
 
                 this.lagBar.incrementFillBy(0.05f);
                 this.lagBar.updateTimesToLaggers(pSecondsElapsed); //TO WEAR OFF LAGGERS AS THEY END.
@@ -258,27 +256,50 @@ public class MainGameScene extends BaseScene implements GameMechanics, IAccelera
 
         resourcesController.engine.enableAccelerationSensor(resourcesController.gameControl,this); //HABILITA EL ACELEROMETRO
 
-
     }
 
     @Override
     public void endGameplay()
     {
         this.gameStatus = GameStatus.GAME_ENDING;
+
+        resourcesController.engine.disableAccelerationSensor(resourcesController.gameControl);
+
+        MoveModifier centerMeteor = new MoveModifier(0.5f,this.meteor.getX(),this.meteor.getY(),GameControl.CAMERA_WIDTH /2, GameControl.CAMERA_HEIGHT - this.meteor.getHeight() - 30);
+        this.meteor.registerEntityModifier(centerMeteor);
+
         this.interfaceLayer.detachSelf();
 
 
-        if (this.canWin)
-        {
+        MoveYModifier my = new MoveYModifier(0.5f,this.finalLag.getY(),this.finalLag.getHeight()/2);
+        DelayModifier d = new DelayModifier(2.5f);
 
-        }
-        else
-        {
+        SequenceEntityModifier seq = new SequenceEntityModifier(d,my);
 
-        }
+        this.finalLag.registerEntityModifier(seq);
 
-        this.verticalGameBackground.startEndingSequence();
 
+        MoveYModifier myFinal = new MoveYModifier(3.0f,this.finalLagBackground.getY(),this.finalLagBackground.getHeight()/2)  {
+            @Override
+            protected void onModifierFinished(IEntity pItem) {
+                super.onModifierFinished(pItem);
+
+                gameOver();
+
+                if (MainGameScene.this.canWin)
+                {
+                    //winGame();
+                }
+                else
+                {
+                    //winGame();
+                }
+
+
+            }
+        };
+
+        this.finalLagBackground.registerEntityModifier(myFinal);
 
 
     }
@@ -290,18 +311,44 @@ public class MainGameScene extends BaseScene implements GameMechanics, IAccelera
         this.meteorVelocity = 0.0f;
         this.meteorAcceleration = 0.0f;
         this.verticalGameBackground.setParallaxChangePerSecond(this.meteorVelocity);
-        this.trailVelocityParticleInitializer.setVelocityY(this.meteorVelocity/3);
+        this.trailParticleSystem.setParticlesSpawnEnabled(false);
+        this.finalLagLaserParticleSystem.setParticlesSpawnEnabled(true);
 
-        this.finalLag.setPosition(GameControl.CAMERA_WIDTH/2,+this.finalLag.getHeight()/2 );
+        this.explosion.setPosition(this.meteor.getX()-10, this.meteor.getY());
+        this.gameLayer.attachChild(this.explosion);
+
+        this.resourcesController.engine.registerUpdateHandler(new TimerHandler(2.0f,
+                new ITimerCallback() {
+                    @Override
+                    public void onTimePassed(TimerHandler pTimerHandler) {
+                        MainGameScene.this.resourcesController.engine.unregisterUpdateHandler(pTimerHandler); // Invalida el timer
+                        MainGameScene.this.explosion.animate(24, false);
+                        MainGameScene.this.meteor.detachSelf();
+                        MainGameScene.this.finalLagLaserParticleSystem.setParticlesSpawnEnabled(false);
+
+
+                    }
+                }));
 
     }
+
 
     @Override
     public void gameOver()
     {
-        //this.verticalGameBackground.startEndingSequence();
-
         this.gameStatus = GameStatus.GAME_OVER;
+        this.meteorVelocity = 0.0f;
+        this.meteorAcceleration = 0.0f;
+        this.verticalGameBackground.setParallaxChangePerSecond(this.meteorVelocity);
+
+        this.explosionCrash.setPosition(GameControl.CAMERA_WIDTH/2, this.explosionCrash.getHeight()/2);
+        this.gameLayer.attachChild(this.explosionCrash);
+
+
+
+        this.explosionCrash.animate(60,true);
+
+
     }
 
     //ESCENA BASE ABSTRACT METHODS _______
@@ -317,6 +364,9 @@ public class MainGameScene extends BaseScene implements GameMechanics, IAccelera
         this.infoLayer = setupInfoLayer();
         attachChild(this.infoLayer);
 
+        this.finalLagLayer = setupFinalLagLayer();
+        attachChild(this.finalLagLayer);
+
         this.gameLayer = setupGameLayer();
         attachChild(this.gameLayer);
 
@@ -324,6 +374,22 @@ public class MainGameScene extends BaseScene implements GameMechanics, IAccelera
         attachChild(this.effectsLayer);
 
         this.gameStatus = GameStatus.GAME_STARTING;
+    }
+
+    private EntityLayer setupFinalLagLayer() {
+
+        EntityLayer layer = new EntityLayer(GameControl.CAMERA_WIDTH/2,GameControl.CAMERA_HEIGHT/2,GameControl.CAMERA_WIDTH,GameControl.CAMERA_HEIGHT);
+
+        this.finalLagBackground.setPosition(GameControl.CAMERA_WIDTH / 2, -this.finalLagBackground.getHeight() / 2);
+        layer.attachChild(this.finalLagBackground);
+
+        this.finalLagLaserEmitter.setCenter(GameControl.CAMERA_WIDTH / 2, this.finalLag.getHeight()-15);
+        layer.attachChild(this.finalLagLaserParticleSystem);
+
+        this.finalLag.setPosition(GameControl.CAMERA_WIDTH / 2, -this.finalLag.getHeight() / 2);
+        layer.attachChild(this.finalLag);
+
+        return layer;
     }
 
     private EntityLayer setupInterfaceLayer() {
@@ -365,10 +431,6 @@ public class MainGameScene extends BaseScene implements GameMechanics, IAccelera
         this.trailEmmiter.setCenterY(this.meteor.getY());
         this.trailEmmiter.setCenterX(meteor.getX()); //PARA QUE INICIE EN EL METEORO
 
-        this.finalLag.setPosition(GameControl.CAMERA_WIDTH/2,-this.finalLag.getHeight()/2 );
-        layer.attachChild(this.finalLag);
-
-
         return layer;
 
     }
@@ -400,7 +462,7 @@ public class MainGameScene extends BaseScene implements GameMechanics, IAccelera
         this.meteorAcceleration = level.propierties.getAcceleration();
         this.meteorVelocity = level.propierties.getVelocity();
         this.meteorResistance = level.propierties.getResistance();
-        this.meteorHeight = level.getAdjustedHeight();
+        this.meteorHeight = level.propierties.getHeight();
         this.timeEleapsed = level.propierties.getTime();
 
         this.levelTitle = resourcesController.generateText(level.propierties.getTitle(),GameControl.CAMERA_WIDTH/2,GameControl.CAMERA_HEIGHT/2 + 50,90,0xFFFFFFFF);
@@ -413,10 +475,18 @@ public class MainGameScene extends BaseScene implements GameMechanics, IAccelera
 
         this.meteor = level.getMeteor();
         this.lagBar = level.getLagBar();
+        this.finalLagBackground = level.getFinalLagBG();
         this.finalLag = level.getFinalLag();
+        this.explosion = level.getExplosion();
+        this.explosionCrash = level.getExplosionCrash();
+
 
         this.trailParticleSystem = level.getTrailParticleSystem();
         this.trailEmmiter = (CircleParticleEmitter) this.trailParticleSystem.getParticleEmitter();
+
+        this.finalLagLaserParticleSystem = level.getFinalLagLaserParticleSystem();
+        this.finalLagLaserParticleSystem.setParticlesSpawnEnabled(false);
+        this.finalLagLaserEmitter = (PointParticleEmitter) this.finalLagLaserParticleSystem.getParticleEmitter();
 
         this.inGameLaggerRegion = level.getInGameLaggerRegion();
         this.inGameSpeederRegion = level.getInGameSpeederRegion();

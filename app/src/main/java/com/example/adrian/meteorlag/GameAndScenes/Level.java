@@ -11,23 +11,34 @@ import com.example.adrian.meteorlag.GameAndScenes.Laggers.MissileLagger;
 import com.example.adrian.meteorlag.GameAndScenes.Laggers.SuperMissileLagger;
 import com.example.adrian.meteorlag.Meteor;
 import com.google.gson.Gson;
-import com.google.gson.JsonParser;
 
 import org.andengine.entity.IEntityFactory;
 import org.andengine.entity.particle.ParticleSystem;
 import org.andengine.entity.particle.emitter.CircleParticleEmitter;
+import org.andengine.entity.particle.emitter.PointParticleEmitter;
+import org.andengine.entity.particle.initializer.AccelerationParticleInitializer;
 import org.andengine.entity.particle.initializer.BlendFunctionParticleInitializer;
+import org.andengine.entity.particle.initializer.ColorParticleInitializer;
 import org.andengine.entity.particle.initializer.ExpireParticleInitializer;
 import org.andengine.entity.particle.initializer.RotationParticleInitializer;
 import org.andengine.entity.particle.initializer.ScaleParticleInitializer;
+import org.andengine.entity.particle.initializer.VelocityParticleInitializer;
 import org.andengine.entity.particle.modifier.AlphaParticleModifier;
 import org.andengine.entity.particle.modifier.ScaleParticleModifier;
 import org.andengine.entity.scene.background.ParallaxBackground;
+import org.andengine.entity.sprite.AnimatedSprite;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.opengl.texture.ITexture;
+import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
+import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
+import org.andengine.opengl.texture.atlas.bitmap.BuildableBitmapTextureAtlas;
+import org.andengine.opengl.texture.atlas.bitmap.source.IBitmapTextureAtlasSource;
+import org.andengine.opengl.texture.atlas.buildable.builder.BlackPawnTextureAtlasBuilder;
+import org.andengine.opengl.texture.atlas.buildable.builder.ITextureAtlasBuilder;
 import org.andengine.opengl.texture.bitmap.AssetBitmapTexture;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.texture.region.TextureRegionFactory;
+import org.andengine.opengl.texture.region.TiledTextureRegion;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,6 +51,10 @@ import java.util.ArrayList;
 public class Level
 {
     final static public String LEVEL_FOLDER = "Levels/";
+    final static public String INTERFACE_FOLDER = "Interface/";
+    final static public String EXPLOSION_FILE = "ex.png";
+    final static public String EXPLOSION_CRASH_FILE = "exc.png";
+    final static public String LASER_FILE = "laser.png";
 
     final static public String DATA_FILE = "/data.json";
     final static public String BACKGROUND_FILE = "/bg.png";
@@ -52,6 +67,8 @@ public class Level
     final static public String IN_LEVEL_LAGGER_FILE = "/lagger.png";
     final static public String IN_LEVEL_SPEEDER_FILE = "/speeder.png";
     final static public String FINAL_LAG_FILE = "/finallag.png";
+    final static public String FINAL_LAG_BG_FILE = "/bg_end.png";
+
 
 
     protected ResourcesController resourcesController;
@@ -81,9 +98,23 @@ public class Level
     private ITexture textureFinalLag;
     public ITextureRegion regionFinalLag;
 
+    private ITexture textureFinalLagBG;
+    public ITextureRegion regionFinalLagBG;
+
+    private ITexture textureLaser;
+    public ITextureRegion regionLaser;
+
+    private BuildableBitmapTextureAtlas textureExplosion;
+    private TiledTextureRegion regionExplosion;
+
+    private BuildableBitmapTextureAtlas textureExplosionCrash;
+    private TiledTextureRegion regionExplosionCrash;
+
 
     private String id;
     public LevelJSON propierties;
+
+
 
     public Level(String id,MainGameScene scene,ResourcesController adm){
         this.id = id;
@@ -120,11 +151,6 @@ public class Level
         }
         return json;
 
-    }
-
-    public float getAdjustedHeight()
-    {
-        return (this.propierties.getHeight() * GameControl.CAMERA_HEIGHT*2/0.15f);
     }
 
 
@@ -222,6 +248,53 @@ public class Level
             Log.d("NIVEL ID: " + this.id , "No se pueden cargar la imagen" + FINAL_LAG_FILE);
         }
 
+        //FINAL LAG BG
+        try {
+            textureFinalLagBG = new AssetBitmapTexture(this.resourcesController.gameControl.getTextureManager(),
+                    this.resourcesController.gameControl.getAssets(), LEVEL_FOLDER + this.id + FINAL_LAG_BG_FILE);
+            regionFinalLagBG = TextureRegionFactory.extractFromTexture(textureFinalLagBG);
+            textureFinalLagBG.load();
+        } catch (IOException e) {
+            Log.d("NIVEL ID: " + this.id , "No se pueden cargar la imagen" + FINAL_LAG_BG_FILE);
+        }
+
+        //Final Lag Laser
+        try {
+            textureLaser = new AssetBitmapTexture(this.resourcesController.gameControl.getTextureManager(),
+                    this.resourcesController.gameControl.getAssets(), INTERFACE_FOLDER + LASER_FILE);
+            regionLaser = TextureRegionFactory.extractFromTexture(textureLaser);
+            textureLaser.load();
+        } catch (IOException e) {
+            Log.d("NIVEL ID: " + this.id , "No se pueden cargar la imagen" + METEOR_TRAIL_FILE);
+        }
+
+
+        //EXPLOSION ANIMADA
+        // Carga las imágenes para el perro Animado
+        textureExplosion = new BuildableBitmapTextureAtlas(this.resourcesController.gameControl.getTextureManager(),2048,1536);
+        regionExplosion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(
+                textureExplosion, this.resourcesController.gameControl,INTERFACE_FOLDER+EXPLOSION_FILE, 8, 6);
+
+        try {
+            textureExplosion.build(new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>(0, 0, 0));
+        } catch (ITextureAtlasBuilder.TextureAtlasBuilderException e) {
+            Log.d("onCreateResources","No se puede cargar la imagen para el Sprite del perro Animado");
+        }
+        textureExplosion.load();
+
+        //EXPLOSION ANIMADA CHOQUE
+        // Carga las imágenes para el perro Animado
+        textureExplosionCrash = new BuildableBitmapTextureAtlas(this.resourcesController.gameControl.getTextureManager(),2000,1200);
+        regionExplosionCrash = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(
+                textureExplosionCrash, this.resourcesController.gameControl,INTERFACE_FOLDER+EXPLOSION_CRASH_FILE, 5, 3);
+
+        try {
+            textureExplosionCrash.build(new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>(0, 0, 0));
+        } catch (ITextureAtlasBuilder.TextureAtlasBuilderException e) {
+            Log.d("onCreateResources","No se puede cargar la imagen para el Sprite del perro Animado2");
+        }
+        textureExplosionCrash.load();
+
     }
 
     public ITextureRegion getInGameLaggerRegion()
@@ -254,6 +327,44 @@ public class Level
         return new Meteor(0,0, regionMeteor, resourcesController.vbom);
     }
 
+    public AnimatedSprite getExplosion() {
+        return new AnimatedSprite(GameControl.CAMERA_WIDTH/2,regionExplosion.getHeight(),
+                regionExplosion,resourcesController.vbom);
+    }
+
+    public AnimatedSprite getExplosionCrash() {
+        return new AnimatedSprite(GameControl.CAMERA_WIDTH/2,regionExplosionCrash.getHeight(),
+                regionExplosionCrash,resourcesController.vbom);
+    }
+
+    public ParticleSystem<Sprite> getExplosionParticleSystem() {
+
+        IEntityFactory<Sprite> ief = new IEntityFactory<Sprite>() {
+            @Override
+            public Sprite create(float pX, float pY)
+            {
+                return new Sprite(pX,pY,Level.this.regionMeteorTrail,resourcesController.vbom);
+            }
+        };
+
+        PointParticleEmitter trailEmmiter = new PointParticleEmitter(0.0f,0.0f);
+
+        ParticleSystem<Sprite> trailParticleSystem = new ParticleSystem<Sprite>(ief,trailEmmiter,190,200,800);
+        float tiempoVida = 4.0f;   // Segundos de vida de cada partícula
+        trailParticleSystem.addParticleInitializer(new ExpireParticleInitializer<Sprite>(tiempoVida));
+        trailParticleSystem.addParticleInitializer(new VelocityParticleInitializer<Sprite>(-1500.0f,1500.0f,1800.0f,1900.0f));
+        trailParticleSystem.addParticleInitializer(new AccelerationParticleInitializer<Sprite>(0.0f,-2000.0f));
+
+        //trailParticleSystem.addParticleInitializer(new RotationParticleInitializer<Sprite>(-800, 800));
+       // trailParticleSystem.addParticleModifier(new AlphaParticleModifier<Sprite>(0.0f,1.5f,0.45f,0.0f));
+
+        trailParticleSystem.addParticleModifier(new ScaleParticleModifier<Sprite>(0.0f,tiempoVida,2.0f,0.0f));
+        //trailParticleSystem.addParticleModifier(new ScaleParticleModifier<Sprite>(0.05f,1.0f,5.0f,0.5f));
+
+        return trailParticleSystem;
+    }
+
+
     public ParticleSystem<Sprite> getTrailParticleSystem() {
 
         IEntityFactory<Sprite> ief = new IEntityFactory<Sprite>() {
@@ -281,6 +392,38 @@ public class Level
         return trailParticleSystem;
     }
 
+    public ParticleSystem<Sprite> getFinalLagLaserParticleSystem() {
+
+        IEntityFactory<Sprite> ief = new IEntityFactory<Sprite>() {
+            @Override
+            public Sprite create(float pX, float pY)
+            {
+                return new Sprite(pX,pY,Level.this.regionLaser,resourcesController.vbom);
+            }
+        };
+
+        PointParticleEmitter trailEmmiter = new PointParticleEmitter(0.0f,0.0f);
+
+
+        ParticleSystem<Sprite> trailParticleSystem = new ParticleSystem<Sprite>(ief,trailEmmiter,100,100,100);
+        trailParticleSystem.addParticleInitializer(new BlendFunctionParticleInitializer<Sprite>(
+                GLES20.GL_SRC_ALPHA,GLES20.GL_ONE));
+
+
+        float tiempoVida = 0.35f;   // Segundos de vida de cada partícula
+        trailParticleSystem.addParticleInitializer(new ColorParticleInitializer<Sprite>(0,0,0,255,255,255));
+
+        trailParticleSystem.addParticleInitializer(new ExpireParticleInitializer<Sprite>(tiempoVida));
+        trailParticleSystem.addParticleInitializer(new ScaleParticleInitializer<Sprite>(-10.0f,10.0f));
+
+        trailParticleSystem.addParticleInitializer(new VelocityParticleInitializer<Sprite>(-2.5f,2.5f,1500.0f,1500.0f));
+        trailParticleSystem.addParticleModifier(new ScaleParticleModifier<Sprite>(0.0f,0.06f,1.5f,0.4f));
+
+
+
+        return trailParticleSystem;
+    }
+
 
     public LagBar getLagBar() {
 
@@ -297,6 +440,11 @@ public class Level
     public Sprite getFinalLag()
     {
         return new Sprite(0,0,regionFinalLag,resourcesController.vbom);
+    }
+
+    public Sprite getFinalLagBG()
+    {
+        return new Sprite(0,0,regionFinalLagBG,resourcesController.vbom);
     }
 
 

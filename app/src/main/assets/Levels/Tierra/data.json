@@ -3,7 +3,7 @@
   "subtitle":"Año 2015",
   "acceleration":200,
   "velocity":80,
-  "height":1,
+  "height":600,
   "resistance":10,
   "time":5,
   "laggerRate":3,
