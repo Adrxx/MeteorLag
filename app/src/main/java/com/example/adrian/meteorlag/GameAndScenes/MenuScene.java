@@ -57,8 +57,8 @@ public class MenuScene extends BaseScene
 
                     // Cambia a la escena de ACERCA DE
                     this.setEnabled(false);
-                    scenesController.crearEscenaJuego();
-                    scenesController.setEscena(SceneType.GAME_SCENE);
+                    scenesController.crearEscenaLS();
+                    scenesController.setEscena(SceneType.LEVEL_SELECTION_SCENE);
                     scenesController.liberarEscenaMenu();
                 }
                 return super.onAreaTouched(pSceneTouchEvent, pTouchAreaLocalX, pTouchAreaLocalY);

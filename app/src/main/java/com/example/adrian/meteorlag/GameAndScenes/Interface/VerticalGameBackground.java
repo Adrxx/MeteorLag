@@ -20,13 +20,12 @@ public class VerticalGameBackground extends AutoParallaxBackground
 
     public VerticalGameBackground(float changePerSecond)
     {
-        super(1.0f,0.0f,0.0f,changePerSecond);
-
+        super(0.0f,0.0f,0.0f,changePerSecond);
     }
 
     public VerticalGameBackground(float pParallaxChangePerSecond,ITextureRegion repeatingRegion,ITextureRegion endingRegion,ResourcesController rController)
     {
-        super(1.0f, 0.0f, 0.0f, pParallaxChangePerSecond);
+        super(0.0f, 0.0f, 0.0f, pParallaxChangePerSecond);
         this.resourcesController = rController;
 
         final float x = GameControl.CAMERA_WIDTH/2;
@@ -42,7 +41,6 @@ public class VerticalGameBackground extends AutoParallaxBackground
 
     public void startEndingSequence()
     {
-
         //this.detachParallaxEntity(repeatingPE);
         this.attachParallaxEntity(endingPE);
     }

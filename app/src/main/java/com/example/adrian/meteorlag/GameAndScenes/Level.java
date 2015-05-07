@@ -27,7 +27,9 @@ import org.andengine.entity.particle.modifier.AlphaParticleModifier;
 import org.andengine.entity.particle.modifier.ScaleParticleModifier;
 import org.andengine.entity.scene.background.ParallaxBackground;
 import org.andengine.entity.sprite.AnimatedSprite;
+import org.andengine.entity.sprite.ButtonSprite;
 import org.andengine.entity.sprite.Sprite;
+import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.texture.ITexture;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
@@ -77,10 +79,14 @@ public class Level
     private ITexture textureBackground;
     public ITextureRegion regionBackground;
 
+
+    private ITexture textureBackgroundMiddle;
     public ITextureRegion regionBackgroundMiddle;
 
+    private ITexture textureBackgroundTop;
     public ITextureRegion regionBackgroundTop;
 
+    private ITexture textureBackgroundEnding;
     public ITextureRegion regionBackgroundEnding;
 
     private ITexture textureMeteor;
@@ -123,15 +129,14 @@ public class Level
 
         final Gson gson = new Gson();
         this.propierties = gson.fromJson(loadJSONFromAsset(LEVEL_FOLDER+id+DATA_FILE), LevelJSON.class);
-        //this.propierties.setHeight(  );
         loadResources();
     }
 
-    public String loadJSONFromAsset(String asset) {
+    static public String loadJSONFromAsset(String asset) {
         String json = null;
         try {
 
-            InputStream is = this.resourcesController.gameControl.getAssets().open(asset);
+            InputStream is = ResourcesController.getInstance().gameControl.getAssets().open(asset);
 
             int size = is.available();
 
@@ -169,7 +174,7 @@ public class Level
 
         //BACKGROUND MIDDLE
         try {
-            ITexture textureBackgroundMiddle = new AssetBitmapTexture(this.resourcesController.gameControl.getTextureManager(),
+            textureBackgroundMiddle = new AssetBitmapTexture(this.resourcesController.gameControl.getTextureManager(),
                     this.resourcesController.gameControl.getAssets(), LEVEL_FOLDER + this.id + BACKGROUND_FILE_MIDDLE);
             regionBackgroundMiddle = TextureRegionFactory.extractFromTexture(textureBackgroundMiddle);
             textureBackgroundMiddle.load();
@@ -179,7 +184,7 @@ public class Level
 
         //BACKGROUND TOP
         try {
-            ITexture textureBackgroundTop = new AssetBitmapTexture(this.resourcesController.gameControl.getTextureManager(),
+            textureBackgroundTop = new AssetBitmapTexture(this.resourcesController.gameControl.getTextureManager(),
                     this.resourcesController.gameControl.getAssets(), LEVEL_FOLDER + this.id + BACKGROUND_FILE_TOP);
             regionBackgroundTop = TextureRegionFactory.extractFromTexture(textureBackgroundTop);
             textureBackgroundTop.load();
@@ -189,7 +194,7 @@ public class Level
 
         //BACKGROUND ENDING
         try {
-            ITexture textureBackgroundEnding = new AssetBitmapTexture(this.resourcesController.gameControl.getTextureManager(),
+            textureBackgroundEnding = new AssetBitmapTexture(this.resourcesController.gameControl.getTextureManager(),
                     this.resourcesController.gameControl.getAssets(), LEVEL_FOLDER + this.id + BACKGROUND_ENDING_FILE);
             regionBackgroundEnding = TextureRegionFactory.extractFromTexture(textureBackgroundEnding);
             textureBackgroundEnding.load();
@@ -284,9 +289,9 @@ public class Level
 
         //EXPLOSION ANIMADA CHOQUE
         // Carga las imágenes para el perro Animado
-        textureExplosionCrash = new BuildableBitmapTextureAtlas(this.resourcesController.gameControl.getTextureManager(),2000,1200);
+        textureExplosionCrash = new BuildableBitmapTextureAtlas(this.resourcesController.gameControl.getTextureManager(),4080,411);
         regionExplosionCrash = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(
-                textureExplosionCrash, this.resourcesController.gameControl,INTERFACE_FOLDER+EXPLOSION_CRASH_FILE, 5, 3);
+                textureExplosionCrash, this.resourcesController.gameControl,INTERFACE_FOLDER+EXPLOSION_CRASH_FILE, 20, 1);
 
         try {
             textureExplosionCrash.build(new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>(0, 0, 0));
@@ -304,7 +309,7 @@ public class Level
 
     public ITextureRegion getInGameSpeederRegion()
     {
-        return regionFinalLag;
+        return regionInGameSpeeder;
     }
 
     public VerticalGameBackground getParallaxBackground()
@@ -350,15 +355,18 @@ public class Level
         PointParticleEmitter trailEmmiter = new PointParticleEmitter(0.0f,0.0f);
 
         ParticleSystem<Sprite> trailParticleSystem = new ParticleSystem<Sprite>(ief,trailEmmiter,190,200,800);
-        float tiempoVida = 4.0f;   // Segundos de vida de cada partícula
+        trailParticleSystem.addParticleInitializer(new BlendFunctionParticleInitializer<Sprite>(
+                GLES20.GL_SRC_ALPHA,GLES20.GL_ONE));
+        float tiempoVida = 3.0f;   // Segundos de vida de cada partícula
         trailParticleSystem.addParticleInitializer(new ExpireParticleInitializer<Sprite>(tiempoVida));
-        trailParticleSystem.addParticleInitializer(new VelocityParticleInitializer<Sprite>(-1500.0f,1500.0f,1800.0f,1900.0f));
-        trailParticleSystem.addParticleInitializer(new AccelerationParticleInitializer<Sprite>(0.0f,-2000.0f));
+
+        trailParticleSystem.addParticleInitializer(new VelocityParticleInitializer<Sprite>(-2500.0f,2500.0f,1600.0f,1900.0f));
+        trailParticleSystem.addParticleInitializer(new AccelerationParticleInitializer<Sprite>(0.0f,-2400.0f));
 
         //trailParticleSystem.addParticleInitializer(new RotationParticleInitializer<Sprite>(-800, 800));
        // trailParticleSystem.addParticleModifier(new AlphaParticleModifier<Sprite>(0.0f,1.5f,0.45f,0.0f));
 
-        trailParticleSystem.addParticleModifier(new ScaleParticleModifier<Sprite>(0.0f,tiempoVida,2.0f,0.0f));
+        trailParticleSystem.addParticleModifier(new ScaleParticleModifier<Sprite>(0.0f,tiempoVida/2,2.0f,0.0f));
         //trailParticleSystem.addParticleModifier(new ScaleParticleModifier<Sprite>(0.05f,1.0f,5.0f,0.5f));
 
         return trailParticleSystem;
@@ -454,17 +462,42 @@ public class Level
         textureBackground.unload();
         regionBackground = null;
 
-        textureMeteor.unload();
-        regionMeteor = null;
+        textureBackgroundMiddle.unload();
+        regionBackgroundMiddle = null;
+
+        textureBackgroundTop.unload();
+       regionBackgroundTop = null;
+
+        textureBackgroundEnding.unload();
+       regionBackgroundEnding = null;
+
+   textureMeteor.unload();
+       regionMeteor = null;
 
         textureMeteorTrail.unload();
-        regionMeteorTrail = null;
+ regionMeteorTrail = null;
+
+  textureInGameLagger.unload();
+         regionInGameLagger = null;
+
+ textureInGameSpeeder.unload();
+regionInGameSpeeder = null;
 
         textureFinalLag.unload();
-        regionFinalLag = null;
+         regionFinalLag = null;
 
-        textureInGameLagger.unload();
-        regionInGameLagger = null;
+      textureFinalLagBG.unload();
+     regionFinalLagBG = null;
+
+         textureLaser.unload();
+         regionLaser= null;
+
+  textureExplosion.unload();
+      regionExplosion = null;
+
+         textureExplosionCrash.unload();
+         regionExplosionCrash = null;
+
 
     }
 

@@ -6,6 +6,7 @@ import com.example.adrian.meteorlag.GameAndScenes.ResourcesController;
 
 import org.andengine.entity.Entity;
 import org.andengine.entity.text.Text;
+import org.andengine.opengl.util.criteria.StringGLCriteria;
 import org.andengine.util.adt.color.Color;
 
 /**
@@ -34,16 +35,21 @@ public class TextTimer extends Entity {
     public void updateTimeInSecs(float secs)
     {
 
-        boolean sign = (secs < 0);
+        boolean negative = false;
+        if (secs<0) {
+            negative = true;
+            secs = Math.abs(secs-1);
+        }
+
 
         this.mins = Math.floor(Math.floor(secs)/60.0);
         this.secs = secs - (60*this.mins);
 
-        this.updateTime(sign);
+        this.updateTime(negative);
 
     }
 
-    private void updateTime(boolean sign) {
+    private void updateTime(boolean neg) {
 
         Double dm = Math.floor(this.mins);
         String m = String.format("%01d", dm.intValue() );
@@ -51,13 +57,15 @@ public class TextTimer extends Entity {
         Double ds = Math.floor(this.secs);
         String s = String.format("%02d", ds.intValue() );
 
+        String sign = "";
 
-        String men = "";
-        if (sign)
+        if (neg)
         {
-            men = "";
+            sign = "-";
+            this.textTimer.setColor(Color.GREEN);
         }
-        this.textTimer.setText(men+m+":"+s);
+
+        this.textTimer.setText(sign+m+":"+s);
     }
 
 }

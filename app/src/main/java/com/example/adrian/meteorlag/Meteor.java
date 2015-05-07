@@ -22,6 +22,7 @@ public class Meteor extends Sprite
 
     public Meteor(float pX, float pY, ITextureRegion pTextureRegion, VertexBufferObjectManager pVertexBufferObjectManager)
     {
+
         super(pX, pY, pTextureRegion, pVertexBufferObjectManager);
 
         RotationByModifier rot = new RotationByModifier(1.0f,45);
@@ -30,17 +31,6 @@ public class Meteor extends Sprite
 
         this.registerEntityModifier(l);
 
-        /*
-        MoveYModifier myup = new MoveYModifier(1.0f,this.getY()- METEOR_Y_SHAKE/2, this.getY() + METEOR_Y_SHAKE/2);
-
-        MoveYModifier mydown = new MoveYModifier(1.0f,this.getY() + METEOR_Y_SHAKE/2, this.getY() - METEOR_Y_SHAKE/2);
-
-        SequenceEntityModifier par = new SequenceEntityModifier(myup,mydown);
-
-        LoopEntityModifier l = new LoopEntityModifier(par);
-
-        this.registerEntityModifier(l);
-        */
 
     }
 

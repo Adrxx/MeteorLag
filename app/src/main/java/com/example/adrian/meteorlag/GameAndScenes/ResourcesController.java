@@ -67,6 +67,18 @@ public class ResourcesController
     public ITiledTextureRegion regionBtnAcercaDe;
     private BuildableBitmapTextureAtlas btaBtnAcercaDe;
 
+    //UNIVERSAL
+    public ITiledTextureRegion regionPauseButton;
+    private BuildableBitmapTextureAtlas btaPauseButton;
+
+
+    //LS
+    public ITiledTextureRegion regionRightButton;
+    private BuildableBitmapTextureAtlas btaRightButton;
+
+    public ITiledTextureRegion regionLeftButton;
+    private BuildableBitmapTextureAtlas btaLeftButton;
+
     // Escena Acerca de
     private ITexture texturaFondoAcercaDe;
     public ITextureRegion regionFondoAcercaDe;
@@ -104,7 +116,19 @@ public class ResourcesController
 
     public void loadUniversalResources()
     {
-       this.loadingText = generateText("Cargando...",GameControl.CAMERA_WIDTH/2,GameControl.CAMERA_HEIGHT/2,90,0xFFFFFFFF);
+
+        btaPauseButton = new BuildableBitmapTextureAtlas(gameControl.getTextureManager(),
+                330,252);
+        regionPauseButton = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(btaPauseButton, gameControl.getAssets(),
+                "pause.png", 1, 2);
+        try {
+            btaPauseButton.build(new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>(0,0,0));
+
+        } catch(ITextureAtlasBuilder.TextureAtlasBuilderException e) {
+            Log.d("cargarRecursosMenu","No se puede cargar la imagen del botón jugar");
+        }
+        btaPauseButton.load();
+       //this.loadingText = generateText("Cargando...",GameControl.CAMERA_WIDTH/2,GameControl.CAMERA_HEIGHT/2,90,0xFFFFFFFF);
         try {
             // Carga la imagen de fondo de la pantalla del Menú
             textureUniversalBG = new AssetBitmapTexture(gameControl.getTextureManager(),
@@ -233,6 +257,42 @@ public class ResourcesController
     public void liberarRecursosAcercaDe() {
         texturaFondoAcercaDe.unload();
         regionFondoAcercaDe = null;
+    }
+
+
+
+    //*** Recursos de la pantalla de SELECCION DE ESCENAS
+    public void cargarRecursosLS() {
+
+
+        btaRightButton = new BuildableBitmapTextureAtlas(gameControl.getTextureManager(),
+                84,222);
+        regionRightButton = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(btaRightButton, gameControl.getAssets(),
+                "r.png", 1, 2);
+        try {
+            btaRightButton.build(new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>(0,0,0));
+
+        } catch(ITextureAtlasBuilder.TextureAtlasBuilderException e) {
+            Log.d("buttons","No se puede cargar la imagen del botón ");
+        }
+        btaRightButton.load();
+
+
+        btaLeftButton = new BuildableBitmapTextureAtlas(gameControl.getTextureManager(),
+                84,222);
+        regionLeftButton = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(btaLeftButton, gameControl.getAssets(),
+                "l.png", 1, 2);
+        try {
+            btaLeftButton.build(new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>(0,0,0));
+
+        } catch(ITextureAtlasBuilder.TextureAtlasBuilderException e) {
+            Log.d("buttons","No se puede cargar la imagen del botón ");
+        }
+        btaLeftButton.load();
+    }
+
+    public void liberarRecursosLS() {
+
     }
 
 }

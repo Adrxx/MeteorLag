@@ -19,6 +19,7 @@ public interface GameMechanics
 
     void startGameplay();
     void pauseGameplay();
+    void resumeGameplay();
     void endGameplay();
 
     void winGame();

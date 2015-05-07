@@ -16,6 +16,8 @@ public class ScenesController
     private BaseScene escenaMenu;
     private BaseScene escenaAcercaDe;
     private BaseScene escenaJuego;
+    private BaseScene escenaLS;
+
 
     // El tipo de escena que se está mostrando
     private SceneType actualSceneType = SceneType.SPLASH_SCENE;
@@ -67,6 +69,9 @@ public class ScenesController
                 break;
             case GAME_SCENE:
                 setEscenaBase(escenaJuego);
+                break;
+            case LEVEL_SELECTION_SCENE:
+                setEscenaBase(escenaLS);
                 break;
         }
     }
@@ -127,4 +132,21 @@ public class ScenesController
         escenaJuego.unloadScene();
         escenaJuego = null;
     }
+
+    //*** Crea la escena de Acerca De
+    public void crearEscenaLS() {
+        // Carga los recursos
+        admRecursos.cargarRecursosLS();
+        escenaLS = new LevelSelectionScene();
+    }
+
+    //*** Libera la escena de Splash
+    public void liberarEscenaLS() {
+        admRecursos.liberarRecursosLS();
+        escenaLS.unloadScene();
+        escenaLS = null;
+    }
+
+
+
 }

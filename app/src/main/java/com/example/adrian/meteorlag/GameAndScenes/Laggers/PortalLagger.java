@@ -18,26 +18,26 @@ import org.andengine.util.modifier.ease.EaseCubicInOut;
 import java.io.IOException;
 
 /**
- * Created by Adrian on 4/5/15.
+ * Created by Adrian on 5/7/15.
  */
-public class AntigravityLagger extends Lagger{
+public class PortalLagger extends Lagger {
 
-    public AntigravityLagger(MainGameScene scene) {
-        super(scene);
-    }
     private Rectangle overlay;
 
     private float savedEnergy = 0.0f;
+
+    public PortalLagger(MainGameScene scene) {
+        super(scene);
+    }
+
 
     @Override
     public void actUponScene() {
         super.actUponScene();
         this.savedEnergy = this.actingScene.lagBar.getFill();
-        this.actingScene.meteorAcceleration =this.actingScene.currentLevel.propierties.getAcceleration()/20;
-        this.actingScene.meteorVelocity = this.actingScene.meteorVelocity/4;
-        this.actingScene.lagBar.reduceFillBy( Math.max(40.0f,this.actingScene.lagBar.getFill()/2) );
+        this.actingScene.lagBar.reduceFillBy( 30.0f );
 
-        this.overlay = new Rectangle(GameControl.CAMERA_WIDTH/2,GameControl.CAMERA_HEIGHT/2,GameControl.CAMERA_WIDTH,GameControl.CAMERA_HEIGHT,ResourcesController.getInstance().vbom);
+        this.overlay = new Rectangle(GameControl.CAMERA_WIDTH/2,GameControl.CAMERA_HEIGHT/2,GameControl.CAMERA_WIDTH,GameControl.CAMERA_HEIGHT, ResourcesController.getInstance().vbom);
         this.overlay.setColor(Color.CYAN);
 
         AlphaModifier fadeIn = new AlphaModifier(0.8f,0.15f,0.45f, new EaseCubicInOut() );
@@ -58,7 +58,7 @@ public class AntigravityLagger extends Lagger{
         try {
             // Carga la imagen de fondo de la pantalla Splash
             buttonTexture = new AssetBitmapTexture(ResourcesController.getInstance().gameControl.getTextureManager(),
-                    ResourcesController.getInstance().gameControl.getAssets(), INTERFACE_FOLDER+ "weapon_lagger_4.png");
+                    ResourcesController.getInstance().gameControl.getAssets(), INTERFACE_FOLDER+ "weapon_lagger_3.png");
             buttonTextureRegion = TextureRegionFactory.extractFromTexture(buttonTexture);
             buttonTexture.load();
         } catch (IOException e) {
@@ -82,3 +82,6 @@ public class AntigravityLagger extends Lagger{
         this.overlay.detachSelf();
     }
 }
+
+
+
