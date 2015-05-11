@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        jar="/Users/Adrian/AndroidStudioProjects/MeteorLag/app/build/intermediates/exploded-aar/com.android.support/support-v4/21.0.3/classes.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="2c91c949a45a21cdecf26e03951e46c7beec9ad8">
+        <dex dex="/Users/Adrian/AndroidStudioProjects/MeteorLag/app/build/intermediates/pre-dexed/debug/classes-7aab994e4955704ff24be0961966ce8c1bf6e1ea.jar" />
+    </item>
+    <item
+        jar="/Users/Adrian/AndroidStudioProjects/MeteorLag/app/build/intermediates/exploded-aar/com.android.support/appcompat-v7/21.0.3/classes.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="81d42bf983a8741f4888a6e333e454e4a5e0eeb7">
+        <dex dex="/Users/Adrian/AndroidStudioProjects/MeteorLag/app/build/intermediates/pre-dexed/debug/classes-d4c4272673d811a16fa2a93bb9f67f80490decee.jar" />
+    </item>
+    <item
+        jar="/Users/Adrian/Documents/Projects/Android/MeteorLag/app/build/intermediates/exploded-aar/com.android.support/support-v4/21.0.3/libs/internal_impl-21.0.3.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="01ec05bfbafcc07646ba813000bf2ef11742dd03">
+        <dex dex="/Users/Adrian/Documents/Projects/Android/MeteorLag/app/build/intermediates/pre-dexed/debug/internal_impl-21.0.3-1bc81347d02de2fa09bcd8fc2c158c024b36a090.jar" />
+    </item>
+    <item
+        jar="/Users/Adrian/Documents/Projects/Android/MeteorLag/app/build/intermediates/exploded-aar/MeteorLag/org.andengine/unspecified/classes.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="c32338a8f6a1d5f4ec4e8cc9dd6249d51d9ec31a">
+        <dex dex="/Users/Adrian/Documents/Projects/Android/MeteorLag/app/build/intermediates/pre-dexed/debug/classes-f754eedf0ae215dffa656962493f1462c9035178.jar" />
+    </item>
+    <item
+        jar="/Users/Adrian/AndroidStudioProjects/MeteorLag/app/build/intermediates/exploded-aar/com.android.support/support-v4/21.0.3/libs/internal_impl-21.0.3.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="01ec05bfbafcc07646ba813000bf2ef11742dd03">
+        <dex dex="/Users/Adrian/AndroidStudioProjects/MeteorLag/app/build/intermediates/pre-dexed/debug/internal_impl-21.0.3-cca068a3831b327bfa0cecc6cf9acada3b36699d.jar" />
+    </item>
+    <item
+        jar="/Users/Adrian/Documents/Projects/Android/MeteorLag/app/build/intermediates/exploded-aar/com.android.support/support-v4/21.0.3/classes.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="2c91c949a45a21cdecf26e03951e46c7beec9ad8">
+        <dex dex="/Users/Adrian/Documents/Projects/Android/MeteorLag/app/build/intermediates/pre-dexed/debug/classes-41f8a35faca1ae0ae9697cc2b63938f7b61eda9d.jar" />
+    </item>
+    <item
+        jar="/Users/Adrian/Documents/Projects/Android/MeteorLag/app/build/intermediates/exploded-aar/com.android.support/appcompat-v7/21.0.3/classes.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="81d42bf983a8741f4888a6e333e454e4a5e0eeb7">
+        <dex dex="/Users/Adrian/Documents/Projects/Android/MeteorLag/app/build/intermediates/pre-dexed/debug/classes-f574d3dc4d12dceb399b14da0c1029fc13a9fc03.jar" />
+    </item>
+    <item
+        jar="/Users/Adrian/AndroidStudioProjects/MeteorLag/app/build/intermediates/exploded-aar/MeteorLag/org.andengine/unspecified/classes.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="9ac3d8b3b788e33b0832fddc623813cb6c225432">
+        <dex dex="/Users/Adrian/AndroidStudioProjects/MeteorLag/app/build/intermediates/pre-dexed/debug/classes-faf72154622e88aa4d8f9e12bc59dffc30bb0de7.jar" />
+    </item>
+    <item
+        jar="/Users/Adrian/.gradle/caches/modules-2/files-2.1/org.glassfish.main/javax.annotation/4.0-b33/530a4418742e2c52e9a80eb35533cdaaa7db1262/javax.annotation-4.0-b33.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="530a4418742e2c52e9a80eb35533cdaaa7db1262">
+        <dex dex="/Users/Adrian/Documents/Projects/Android/MeteorLag/app/build/intermediates/pre-dexed/debug/javax.annotation-4.0-b33-6a18d49a84312cafa7607644ffb3333934db76aa.jar" />
+    </item>
+    <item
+        jar="/Users/Adrian/Library/Android/sdk/extras/android/m2repository/com/android/support/support-annotations/21.0.3/support-annotations-21.0.3.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="4b74cefe1f0c1b819e7260c8627a14674e37fd35">
+        <dex dex="/Users/Adrian/AndroidStudioProjects/MeteorLag/app/build/intermediates/pre-dexed/debug/support-annotations-21.0.3-df2d4335f19b1636c4537cbe1918917805f96238.jar" />
+    </item>
+    <item
+        jar="/Users/Adrian/.gradle/caches/modules-2/files-2.1/com.google.code.gson/gson/2.2.4/a60a5e993c98c864010053cb901b7eab25306568/gson-2.2.4.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="a60a5e993c98c864010053cb901b7eab25306568">
+        <dex dex="/Users/Adrian/Documents/Projects/Android/MeteorLag/app/build/intermediates/pre-dexed/debug/gson-2.2.4-1f5ffe841ac7689cdb22f19924a6f31234c22c12.jar" />
+    </item>
+
+</items>

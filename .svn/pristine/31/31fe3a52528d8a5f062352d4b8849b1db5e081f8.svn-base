@@ -1,0 +1,14 @@
+{
+  "title":"Tuercas",
+  "subtitle":"Planeta de metal",
+  "acceleration":150,
+  "velocity":50,
+  "height":58500,
+  "resistance":2,
+  "time":90,
+  "laggerRate":3,
+  "speederRate":0.1,
+  "laggerEffect":0.05,
+  "speederEffect":0.02,
+  "black":false
+}

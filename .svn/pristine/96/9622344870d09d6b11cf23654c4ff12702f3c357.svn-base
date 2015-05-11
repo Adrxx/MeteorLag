@@ -1,0 +1,14 @@
+{
+  "title":"Estambre",
+  "subtitle":"Hogar de muchos gatos",
+  "acceleration":400,
+  "velocity":200,
+  "height":42000,
+  "resistance":5,
+  "time":90,
+  "laggerRate":0.8,
+  "speederRate":3,
+  "laggerEffect":0.05,
+  "speederEffect":0.02,
+  "black":false
+}
